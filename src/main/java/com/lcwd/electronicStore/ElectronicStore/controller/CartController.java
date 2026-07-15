@@ -36,6 +36,16 @@ public class CartController {
 
     }
 
+    @PatchMapping("/{userId}/items/{itemId}")
+    public ResponseEntity<CartDto> updateItemQuantity(
+            @PathVariable String userId,
+            @PathVariable int itemId,
+            @RequestBody AddItemToCartRequest request
+    ) {
+        CartDto cartDto = cartService.updateItemQuantity(userId, itemId, request.getQuantity());
+        return new ResponseEntity<>(cartDto, HttpStatus.OK);
+    }
+
     //clear cart
     @DeleteMapping("/{userId}")
     public ResponseEntity<ApiResponse> clearCart(@PathVariable String userId) {

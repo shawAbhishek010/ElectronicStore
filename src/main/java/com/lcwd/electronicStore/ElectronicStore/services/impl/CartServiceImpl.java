@@ -13,6 +13,7 @@ import com.lcwd.electronicStore.ElectronicStore.repositories.CartRepository;
 import com.lcwd.electronicStore.ElectronicStore.repositories.ProductRepository;
 import com.lcwd.electronicStore.ElectronicStore.repositories.UserRepository;
 import com.lcwd.electronicStore.ElectronicStore.services.CartService;
+import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import java.util.UUID;
 
 
 @Service
+@Transactional
 public class CartServiceImpl implements CartService {
 
     @Autowired
@@ -126,8 +128,46 @@ public class CartServiceImpl implements CartService {
         //conditions
 
         CartItem cartItem1 = cartItemRepository.findById(cartItem).orElseThrow(() -> new ResourceNotFoundException("Cart Item not found !!"));
+        Cart cart = cartItem1.getCart();
+        if (!cart.getUser().getUserId().equals(userId)) {
+            throw new BadApiRequestException("Cart item does not belong to this user !!");
+        }
+        cart.getItems().remove(cartItem1);
         cartItemRepository.delete(cartItem1);
+        cartRepository.save(cart);
 
+    }
+
+    @Override
+    public CartDto updateItemQuantity(String userId, int cartItem, int quantity) {
+        if (quantity < 0) {
+            throw new BadApiRequestException("Requested quantity is not valid !!");
+        }
+
+        CartItem cartItemEntity = cartItemRepository.findById(cartItem)
+                .orElseThrow(() -> new ResourceNotFoundException("Cart Item not found !!"));
+
+        Cart cart = cartItemEntity.getCart();
+        if (!cart.getUser().getUserId().equals(userId)) {
+            throw new BadApiRequestException("Cart item does not belong to this user !!");
+        }
+
+        if (quantity == 0) {
+            cart.getItems().remove(cartItemEntity);
+            cartItemRepository.delete(cartItemEntity);
+            return mapper.map(cartRepository.save(cart), CartDto.class);
+        }
+
+        Product product = cartItemEntity.getProduct();
+        if (quantity > product.getQuantity()) {
+            throw new BadApiRequestException("No more items available in stock !!");
+        }
+
+        cartItemEntity.setQuantity(quantity);
+        cartItemEntity.setTotalPrice(quantity * product.getDiscountedPrice());
+        cartItemRepository.save(cartItemEntity);
+
+        return mapper.map(cartRepository.save(cart), CartDto.class);
     }
 
     @Override
@@ -142,7 +182,14 @@ public class CartServiceImpl implements CartService {
     @Override
     public CartDto getCartByUser(String userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("user not found in database!!"));
-        Cart cart = cartRepository.findByUser(user).orElseThrow(() -> new ResourceNotFoundException("Cart of given user not found !!"));
+        Cart cart = cartRepository.findByUser(user).orElseGet(() -> {
+            Cart newCart = new Cart();
+            newCart.setCartId(UUID.randomUUID().toString());
+            newCart.setCreatedAt(LocalDateTime.now());
+            newCart.setUser(user);
+            newCart.setItems(new ArrayList<>());
+            return cartRepository.save(newCart);
+        });
         return mapper.map(cart, CartDto.class);
     }
 }

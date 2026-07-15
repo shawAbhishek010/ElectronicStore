@@ -91,9 +91,10 @@ public class ProductServiceImpl implements ProductService {
         // 2. Delete product image from folder
         try {
             // images/products/abc.png
-            Path path = Paths.get(imagePath, product.getProductImageName());
-
-            Files.deleteIfExists(path);
+            if (product.getProductImageName() != null && !isRemoteImage(product.getProductImageName())) {
+                Path path = Paths.get(imagePath, product.getProductImageName());
+                Files.deleteIfExists(path);
+            }
 
         } catch (NoSuchFileException ex) {
             logger.info("Product image not found in folder");
@@ -115,7 +116,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public PageableResponse<ProductDto> getAll(int pageNumber, int pageSize, String sortBy, String sortDir) {
         Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
-        Pageable pageable = PageRequest.of(pageNumber-1, pageSize, sort);
+        Pageable pageable = PageRequest.of(Math.max(pageNumber, 0), pageSize, sort);
         Page<Product> page = productRepository.findAll(pageable);
         return pageableHelper.getPageableResponse(page, ProductDto.class);
     }
@@ -123,7 +124,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public PageableResponse<ProductDto> getAllLive(int pageNumber, int pageSize, String sortBy, String sortDir) {
         Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
-        Pageable pageable = PageRequest.of(pageNumber-1, pageSize, sort);
+        Pageable pageable = PageRequest.of(Math.max(pageNumber, 0), pageSize, sort);
         Page<Product> page = productRepository.findByLiveTrue(pageable);
         return pageableHelper.getPageableResponse(page, ProductDto.class);
     }
@@ -131,7 +132,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public PageableResponse<ProductDto> searchByTitle(String subTitle, int pageNumber, int pageSize, String sortBy, String sortDir) {
         Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
-        Pageable pageable = PageRequest.of(pageNumber-1, pageSize, sort);
+        Pageable pageable = PageRequest.of(Math.max(pageNumber, 0), pageSize, sort);
         Page<Product> page = productRepository.findByTitleContaining(subTitle, pageable);
         return pageableHelper.getPageableResponse(page, ProductDto.class);
     }
@@ -168,9 +169,13 @@ public class ProductServiceImpl implements ProductService {
     public PageableResponse<ProductDto> getAllOfCategory(String categoryId, int pageNumber, int pageSize, String sortBy, String sortDir) {
         Category category = categoryRepository.findById(categoryId).orElseThrow(() -> new ResourceNotFoundException("Category of given id not found !!"));
         Sort sort = (sortDir.equalsIgnoreCase("desc")) ? (Sort.by(sortBy).descending()) : (Sort.by(sortBy).ascending());
-        Pageable pageable = PageRequest.of(pageNumber-1, pageSize, sort);
+        Pageable pageable = PageRequest.of(Math.max(pageNumber, 0), pageSize, sort);
         Page<Product> page = productRepository.findByCategory(category, pageable);
         return pageableHelper.getPageableResponse(page, ProductDto.class);
+    }
+
+    private boolean isRemoteImage(String imageName) {
+        return imageName != null && (imageName.startsWith("http://") || imageName.startsWith("https://"));
     }
 }
 

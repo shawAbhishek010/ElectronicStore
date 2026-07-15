@@ -1,6 +1,5 @@
 package com.lcwd.electronicStore.ElectronicStore.dtos;
 
-import com.lcwd.electronicStore.ElectronicStore.validate.MyCustomValidation;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -25,6 +24,4 @@ public class UserDto {
     private String gender;
     @NotBlank(message = "write Something")
     private String about;
-    @MyCustomValidation
-    private String imageName;
 }

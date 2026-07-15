@@ -32,6 +32,7 @@ public class Product {
 
     // Indicates whether product is available in inventory
     private boolean stock;
+    @Column(length = 1000)
     private String productImageName;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id")

@@ -3,6 +3,7 @@ package com.lcwd.electronicStore.ElectronicStore.exceptions;
 import com.lcwd.electronicStore.ElectronicStore.dtos.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -13,6 +14,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/*
+Purpose:
+This class handles common application exceptions in one place.
+Explanation:
+Controllers stay clean because exception-to-response conversion is centralized here.
+Flow:
+When a controller/service throws a known exception, Spring calls the matching handler and returns a proper HTTP status.
+*/
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -45,6 +54,19 @@ public class GlobalExceptionHandler {
                 .successs(false).build();
 
         return new ResponseEntity<>(apiResponse,HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiResponse> authenticationExceptionHandler(AuthenticationException ex) {
+        // Step 1: Build a clear login failure response for invalid email/password.
+        ApiResponse apiResponse = ApiResponse.builder()
+                .message("Invalid email or password")
+                .status(HttpStatus.UNAUTHORIZED)
+                .successs(false)
+                .build();
+
+        // Step 2: Return 401 because authentication failed.
+        return new ResponseEntity<>(apiResponse, HttpStatus.UNAUTHORIZED);
     }
 
 }

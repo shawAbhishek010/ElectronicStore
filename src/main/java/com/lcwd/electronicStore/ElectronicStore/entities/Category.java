@@ -26,6 +26,7 @@ public class Category {
     @Column(name = "category_desc", length = 500)
     private String description;
 
+    @Column(length = 1000)
     private String coverImage;
 
 

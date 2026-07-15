@@ -8,25 +8,26 @@ import com.lcwd.electronicStore.ElectronicStore.helper.PageableHelper;
 import com.lcwd.electronicStore.ElectronicStore.repositories.UserRepository;
 import com.lcwd.electronicStore.ElectronicStore.services.UserService;
 import org.modelmapper.ModelMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/*
+Purpose:
+This service contains user business logic like create, update, delete, and search.
+Explanation:
+JWT authentication uses this same service for register so the project does not duplicate user creation logic.
+Flow:
+Controllers call this service, the service works with UserRepository, and DTO/entity conversion keeps API models separate.
+*/
 @Service
 public class UserServicesImpl implements UserService {
     @Autowired
@@ -35,33 +36,41 @@ public class UserServicesImpl implements UserService {
     private ModelMapper modelMapper;
     @Autowired
     private PageableHelper pageableHelper;
-
-    @Value("${user.profile.image.path}")
-    private String imagePath;
-
-    private Logger logger = LoggerFactory.getLogger(UserServicesImpl.class);
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public UserDto createUser(UserDto userDto) {
 
-        // generate unique id in string format
+        // Step 1: Generate unique id in string format.
         String userId = UUID.randomUUID().toString();
         userDto.setUserId(userId);
-        // dto-> entity
+
+        // Step 2: Encrypt password before saving because plain text passwords must never be stored.
+        userDto.setPassword(getPasswordForStorage(userDto.getPassword()));
+
+        // Step 3: Convert dto->entity, save user, then convert entity->dto for API response.
         User user = dtoToEntity(userDto);
         User save = userRepository.save(user);
-       // entity-> dto
         UserDto newDto = entityToDto(save);
         return newDto;
     }
     @Override
     public UserDto UpdateUser(UserDto userDto, String userid) {
         User user = userRepository.findById(userid).orElseThrow(() -> new ResourceNotFoundException("invalid userId"));
+        // Step 1: Update editable profile fields from request dto.
         user.setName(userDto.getName());
+        user.setEmail(userDto.getEmail());
         user.setAbout(userDto.getAbout());
         user.setGender(userDto.getGender());
-        user.setPassword(userDto.getPassword());
-        user.setImageName(userDto.getImageName());
+
+        // Step 2: Encrypt password when it is newly provided.
+        // BCrypt hashes are skipped here to avoid double-encoding during profile updates.
+        if (userDto.getPassword() != null && !userDto.getPassword().isBlank()) {
+            user.setPassword(getPasswordForStorage(userDto.getPassword()));
+        }
+
+        // Step 3: Save updated user and return dto.
         User save = userRepository.save(user);
         UserDto userDto1 = entityToDto(save);
         return userDto1;
@@ -69,20 +78,9 @@ public class UserServicesImpl implements UserService {
 
     @Override
     public void DeleteUser(String userid) {
-      User user = userRepository.findById(userid).orElseThrow(()-> new ResourceNotFoundException("userId is not valid here"));
-        //delete user profile image
-        //images/user/abc.jpeg
-      String fullPath = imagePath+user.getImageName();
-        try {
-            Path path = Paths.get(imagePath, user.getImageName());
-            Files.deleteIfExists(path);
-        } catch (NoSuchFileException ex) {
-            logger.info("User image not found in folder");
-            ex.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-      userRepository.delete(user);
+        User user = userRepository.findById(userid)
+                .orElseThrow(() -> new ResourceNotFoundException("userId is not valid here"));
+        userRepository.delete(user);
     }
 
     @Override
@@ -96,7 +94,7 @@ public class UserServicesImpl implements UserService {
         Sort sort = (sortDirection.equalsIgnoreCase("desc"))?(Sort.by(sortBy).descending()):(Sort.by(sortBy).ascending());// Sort is a class
         // Create pageable object for pagination and sorting
         // pageNumber-1 because Spring uses 0-based indexing
-        Pageable pageable = PageRequest.of(pageNumber-1, pageSize,sort);// Pageable is an interface
+        Pageable pageable = PageRequest.of(Math.max(pageNumber, 0), pageSize,sort);// Pageable is an interface
         Page<User> page = userRepository.findAll(pageable); // fetch paginated users
         // Convert Page<Entity> to Page<DTO> using helper class
         // This ensures clean API response and avoids exposing entity directly
@@ -121,18 +119,7 @@ public class UserServicesImpl implements UserService {
 
     }
 
-    // CONVERSION PURPOSES:
     private User dtoToEntity(UserDto userDto) {
-//        User user = User.builder()
-//                .userId(userDto.getUserId())
-//                .email(userDto.getEmail())
-//                .name(userDto.getName())
-//                .password(userDto.getPassword())
-//                .about(userDto.getAbout())
-//                .gender(userDto.getGender())
-//                .imageName(userDto.getImageName())
-//                .build();
-//        return user;
         return modelMapper.map(userDto,User.class);// modelMapper method
     }
     private UserDto entityToDto(User save) {
@@ -143,22 +130,24 @@ public class UserServicesImpl implements UserService {
                 .password(save.getPassword())
                 .about(save.getAbout())
                 .gender(save.getGender())
-                .imageName(save.getImageName())
                 .build();
         return  userDto;
     }
-//    private UserDto entityToDto(User user) {
-//        UserDto userDto = new UserDto();     // without  builder
-//        userDto.setUserId(user.getUserId());
-//        userDto.setEmail(user.getEmail());
-//        userDto.setName(user.getName());
-//        userDto.setPassword(user.getPassword());
-//        userDto.setAbout(user.getAbout());
-//        userDto.setGender(user.getGender());
-//        userDto.setImageName(user.getImageName());
-//
-//        return userDto;
-//    }
+
+    private String getPasswordForStorage(String password) {
+        // Step 1: Keep empty password handling simple; validation normally prevents blank passwords.
+        if (password == null || password.isBlank()) {
+            return password;
+        }
+
+        // Step 2: Detect existing BCrypt hashes so image/profile updates do not hash the hash again.
+        if (password.startsWith("$2a$") || password.startsWith("$2b$") || password.startsWith("$2y$")) {
+            return password;
+        }
+
+        // Step 3: Convert raw password into a BCrypt hash before database storage.
+        return passwordEncoder.encode(password);
+    }
 }
 
 

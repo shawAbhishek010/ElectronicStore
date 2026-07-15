@@ -26,8 +26,6 @@ public class User {
     private String gender;
     @Column(length = 2000)
     private String about;
-    @Column(name = "userImageName")
-    private String imageName;
     @OneToMany(mappedBy = "user",fetch = FetchType.LAZY,cascade = CascadeType.REMOVE)
     private List<Order> orders=new ArrayList<>();
 }

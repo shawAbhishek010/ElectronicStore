@@ -130,10 +130,19 @@ public class ProductController {
     @GetMapping(value = "/image/{productId}")
     public void serveUserImage(@PathVariable String productId, HttpServletResponse response) throws IOException {
         ProductDto productDto = productService.get(productId);
+        if (isRemoteImage(productDto.getProductImageName())) {
+            response.sendRedirect(productDto.getProductImageName());
+            return;
+        }
+
         InputStream resource = fileService.getResource(imagePath, productDto.getProductImageName());
         response.setContentType(MediaType.IMAGE_JPEG_VALUE);
         StreamUtils.copy(resource, response.getOutputStream());
 
+    }
+
+    private boolean isRemoteImage(String imageName) {
+        return imageName != null && (imageName.startsWith("http://") || imageName.startsWith("https://"));
     }
 
 }
