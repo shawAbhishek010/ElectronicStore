@@ -12,8 +12,8 @@ public class ProductDto {
     private String productId;
     private String title;
     private String description;
-    private int price;
-    private int discountedPrice;
+    private long price;
+    private long discountedPrice;
     private int quantity;
     private LocalDateTime addedDate;
     private boolean live;

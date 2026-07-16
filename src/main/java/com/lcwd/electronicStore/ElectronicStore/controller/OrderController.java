@@ -3,6 +3,10 @@ import com.lcwd.electronicStore.ElectronicStore.dtos.ApiResponse;
 import com.lcwd.electronicStore.ElectronicStore.dtos.CreateOrderRequest;
 import com.lcwd.electronicStore.ElectronicStore.dtos.OrderDto;
 import com.lcwd.electronicStore.ElectronicStore.dtos.PageableResponse;
+import com.lcwd.electronicStore.ElectronicStore.dtos.RazorpayOrderResponse;
+import com.lcwd.electronicStore.ElectronicStore.dtos.RazorpayPaymentFailureRequest;
+import com.lcwd.electronicStore.ElectronicStore.dtos.RazorpayPaymentVerificationRequest;
+import com.lcwd.electronicStore.ElectronicStore.dtos.RazorpayPaymentVerificationResponse;
 import com.lcwd.electronicStore.ElectronicStore.services.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +28,26 @@ public class OrderController {
     public ResponseEntity<OrderDto> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         OrderDto order = orderService.createOrder(request);
         return new ResponseEntity<>(order, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/razorpay")
+    public ResponseEntity<RazorpayOrderResponse> createRazorpayOrder(@Valid @RequestBody CreateOrderRequest request) {
+        RazorpayOrderResponse response = orderService.createRazorpayOrder(request);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/razorpay/verify")
+    public ResponseEntity<RazorpayPaymentVerificationResponse> verifyRazorpayPayment(
+            @Valid @RequestBody RazorpayPaymentVerificationRequest request
+    ) {
+        return ResponseEntity.ok(orderService.verifyRazorpayPayment(request));
+    }
+
+    @PostMapping("/razorpay/failure")
+    public ResponseEntity<OrderDto> recordRazorpayPaymentFailure(
+            @Valid @RequestBody RazorpayPaymentFailureRequest request
+    ) {
+        return ResponseEntity.ok(orderService.recordRazorpayPaymentFailure(request));
     }
 
     @DeleteMapping("/{orderId}")

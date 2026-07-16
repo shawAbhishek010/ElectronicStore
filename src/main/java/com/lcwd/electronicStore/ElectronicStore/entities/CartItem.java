@@ -12,18 +12,26 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "cart_items")
+@Table(
+        name = "cart_items",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_cart_item_cart_product",
+                columnNames = {"cart_id", "product_id"}
+        )
+)
 public class CartItem {
 
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int cartItemId;
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "product_id")
     private Product product;
     private  int quantity;
-    private  int totalPrice;
+
+    @Column(columnDefinition = "BIGINT")
+    private long totalPrice;
     //    mapping cart
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cart_id")

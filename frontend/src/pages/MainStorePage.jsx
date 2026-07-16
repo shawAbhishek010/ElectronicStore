@@ -32,7 +32,12 @@ import {
 import { useAuth } from '../hooks/useAuth.js'
 import { getCategories, getProducts } from '../services/catalogService.js'
 import { addCartItem, getCart, removeCartItem, updateCartItemQuantity } from '../services/cartService.js'
-import { createOrder, getUserOrders } from '../services/orderService.js'
+import {
+  createRazorpayOrder,
+  getUserOrders,
+  reportRazorpayPaymentFailure,
+  verifyRazorpayPayment,
+} from '../services/orderService.js'
 import { getRecentlyViewed, trackProductView } from '../services/productViewService.js'
 import { getUserProfile, updateUserProfile } from '../services/userService.js'
 import { addWishlistProduct, getWishlist, removeWishlistProduct } from '../services/wishlistService.js'
@@ -47,6 +52,83 @@ const currency = new Intl.NumberFormat('en-IN', {
 })
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
+const razorpayCheckoutUrl = 'https://checkout.razorpay.com/v1/checkout.js'
+const highValueGuidancePaise = 5_000_000
+const standardUpiLimitPaise = 10_000_000
+let razorpayScriptPromise = null
+
+const getRazorpayDisplayConfig = (amountInPaise) => {
+  if (amountInPaise <= highValueGuidancePaise) return null
+
+  return {
+    blocks: {
+      high_value: {
+        name: amountInPaise > standardUpiLimitPaise ? 'Available for this amount' : 'Recommended for this amount',
+        instruments: [{ method: 'card' }, { method: 'netbanking' }],
+      },
+    },
+    ...(amountInPaise > standardUpiLimitPaise ? { hide: [{ method: 'upi' }] } : {}),
+    sequence: ['block.high_value'],
+    preferences: {
+      show_default_blocks: amountInPaise <= standardUpiLimitPaise,
+    },
+  }
+}
+
+const getRazorpayFailureMessage = (paymentError = {}) => {
+  const description = paymentError.description || 'Payment failed. Please try again.'
+  if (/maximum amount|amount exceeds|transaction limit/i.test(description)) {
+    return `${description} Increase the domestic transaction limit in Razorpay Dashboard or use an eligible Card/Netbanking method.`
+  }
+  return description
+}
+
+const loadRazorpayCheckout = () =>
+  new Promise((resolve, reject) => {
+    if (window.Razorpay) {
+      resolve(window.Razorpay)
+      return
+    }
+
+    if (!razorpayScriptPromise) {
+      razorpayScriptPromise = new Promise((scriptResolve, scriptReject) => {
+        const existingScript = document.querySelector(`script[src="${razorpayCheckoutUrl}"]`)
+
+        if (existingScript?.dataset.loaded === 'true') {
+          scriptResolve()
+          return
+        }
+
+        const script = existingScript || document.createElement('script')
+        script.src = razorpayCheckoutUrl
+        script.async = true
+        script.onload = () => {
+          script.dataset.loaded = 'true'
+          scriptResolve()
+        }
+        script.onerror = () => {
+          razorpayScriptPromise = null
+          scriptReject(new Error('Unable to load Razorpay Checkout.'))
+        }
+
+        if (!existingScript) {
+          document.body.appendChild(script)
+        }
+      })
+    }
+
+    razorpayScriptPromise
+      .then(() => {
+        if (window.Razorpay) {
+          resolve(window.Razorpay)
+          return
+        }
+
+        razorpayScriptPromise = null
+        reject(new Error('Razorpay Checkout is not ready. Please try again.'))
+      })
+      .catch(reject)
+  })
 
 const normalizeCategoryTitle = (title = '') => title.trim().replace(/\s+/g, ' ').toLowerCase()
 const withImageParams = (url, width = 900) => {
@@ -163,6 +245,7 @@ function MainStorePage() {
   const [pageStatus, setPageStatus] = useState({ loading: true, error: '' })
   const [actionStatus, setActionStatus] = useState('')
   const [checkoutOpen, setCheckoutOpen] = useState(false)
+  const [checkoutProcessing, setCheckoutProcessing] = useState(false)
   const [checkoutForm, setCheckoutForm] = useState({
     billingName: user?.name || '',
     billingPhone: '',
@@ -450,27 +533,108 @@ function MainStorePage() {
 
   const placeOrder = async (event) => {
     event.preventDefault()
-    if (!user?.userId || !cart.cartId) return
+    if (!user?.userId || !cart.cartId || checkoutProcessing) return
 
     setActionStatus('')
+    setCheckoutProcessing(true)
     try {
-      const order = await createOrder({
+      const Razorpay = await loadRazorpayCheckout()
+
+      const payment = await createRazorpayOrder({
         cartId: cart.cartId,
         userId: user.userId,
         orderStatus: 'PENDING',
-        paymentStatus: 'NOTPAID',
+        paymentStatus: 'PAYMENT_PENDING',
         billingName: checkoutForm.billingName,
         billingPhone: checkoutForm.billingPhone,
         billingAddress: checkoutForm.billingAddress,
       })
-      setOrders((current) => [order, ...current])
-      setCart(await getCart(user.userId))
-      setCheckoutOpen(false)
-      setActivePanel('orders')
-      setActionStatus('Order placed successfully.')
+
+      setOrders((current) => [payment.order, ...current.filter((order) => order.orderId !== payment.order.orderId)])
+
+      const checkoutDisplay = getRazorpayDisplayConfig(payment.amount)
+
+      const checkout = new Razorpay({
+        key: payment.keyId,
+        amount: payment.amount,
+        currency: payment.currency,
+        name: 'SparkGadget',
+        description: `Order ${payment.order.orderId}`,
+        order_id: payment.razorpayOrderId,
+        prefill: {
+          name: checkoutForm.billingName || user.name,
+          email: user.email,
+          contact: checkoutForm.billingPhone,
+        },
+        notes: {
+          localOrderId: payment.order.orderId,
+        },
+        theme: {
+          color: '#0891b2',
+        },
+        ...(checkoutDisplay ? { config: { display: checkoutDisplay } } : {}),
+        handler: async (response) => {
+          try {
+            const verification = await verifyRazorpayPayment({
+              orderId: payment.order.orderId,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            })
+
+            setOrders((current) =>
+              current.map((order) => (order.orderId === verification.order.orderId ? verification.order : order)),
+            )
+            setCart(await getCart(user.userId))
+            setCheckoutOpen(false)
+            setActivePanel('orders')
+            setActionStatus('Payment verified and order placed successfully.')
+          } catch (error) {
+            setActionStatus(error.message)
+          } finally {
+            setCheckoutProcessing(false)
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setCheckoutProcessing(false)
+            setActionStatus('Payment window closed. Your order is still pending payment.')
+          },
+        },
+      })
+
+      checkout.on('payment.failed', (response) => {
+        const paymentError = response.error || {}
+        console.error('Razorpay payment failed', paymentError)
+        setCheckoutProcessing(false)
+        setActionStatus(getRazorpayFailureMessage(paymentError))
+
+        reportRazorpayPaymentFailure({
+          orderId: payment.order.orderId,
+          razorpayOrderId: paymentError.metadata?.order_id || payment.razorpayOrderId,
+          razorpayPaymentId: paymentError.metadata?.payment_id || '',
+          code: paymentError.code || '',
+          reason: paymentError.reason || '',
+          description: paymentError.description || '',
+        })
+          .then((failedOrder) => {
+            setOrders((current) =>
+              current.map((order) => (order.orderId === failedOrder.orderId ? failedOrder : order)),
+            )
+          })
+          .catch((error) => console.error('Unable to record Razorpay payment failure', error))
+      })
+
+      checkout.open()
     } catch (error) {
       setActionStatus(error.message)
+      setCheckoutProcessing(false)
     }
+  }
+
+  const closeCheckout = () => {
+    setCheckoutOpen(false)
+    setCheckoutProcessing(false)
   }
 
   const handleLogout = () => {
@@ -580,6 +744,7 @@ function MainStorePage() {
                           <span className="rounded-lg bg-cyan-400/10 px-2 py-1 text-xs font-black text-cyan-200">{order.orderStatus}</span>
                         </div>
                         <p className="mt-2 text-xs font-semibold text-slate-400">{order.billingName} - {order.billingPhone}</p>
+                        <p className="mt-1 text-xs font-bold text-cyan-200">Payment: {order.paymentStatus || 'PENDING'}</p>
                         <p className="mt-1 text-xs font-semibold text-slate-500">{order.orderItems?.length || 0} products</p>
                       </div>
                     ))}
@@ -840,7 +1005,7 @@ function MainStorePage() {
           <form onSubmit={placeOrder} className="w-full max-w-lg rounded-lg border border-white/10 bg-slate-900 p-5 shadow-2xl">
             <div className="mb-4 flex items-center justify-between gap-3">
               <h2 className="text-xl font-black text-white">Checkout</h2>
-              <button type="button" onClick={() => setCheckoutOpen(false)} className="grid h-9 w-9 place-items-center rounded-lg border border-white/10 text-slate-200"><FiX /></button>
+              <button type="button" onClick={closeCheckout} className="grid h-9 w-9 place-items-center rounded-lg border border-white/10 text-slate-200"><FiX /></button>
             </div>
             <div className="grid gap-3">
               <PanelInput label="Billing Name" value={checkoutForm.billingName} onChange={(value) => setCheckoutForm({ ...checkoutForm, billingName: value })} required />
@@ -852,9 +1017,21 @@ function MainStorePage() {
               <div className="rounded-lg border border-cyan-300/20 bg-cyan-400/10 p-3 text-sm font-bold text-cyan-100">
                 Total: {currency.format(cartTotal)}
               </div>
-              <button type="submit" className="flex h-11 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-400 text-sm font-black text-white">
-                <FiShoppingCart />
-                Place Order
+              {cartTotal > 50_000 && (
+                <div className="rounded-lg border border-amber-300/25 bg-amber-300/10 px-3 py-2 text-sm font-bold text-amber-100">
+                  {cartTotal > 100_000
+                    ? 'Use Card or Netbanking for this amount. Standard UPI supports up to ₹1,00,000.'
+                    : 'Card and Netbanking are prioritized for this amount. Razorpay account and bank limits still apply.'}
+                </div>
+              )}
+              {actionStatus && (
+                <div role="alert" className="rounded-lg border border-rose-400/30 bg-rose-400/10 px-3 py-2 text-sm font-bold text-rose-100">
+                  {actionStatus}
+                </div>
+              )}
+              <button type="submit" disabled={checkoutProcessing} className="flex h-11 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-400 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60">
+                <FiCreditCard />
+                {checkoutProcessing ? 'Opening Payment...' : 'Pay with Razorpay'}
               </button>
             </div>
           </form>
@@ -1052,7 +1229,9 @@ function ProductCard({ product, isLiked, onAddToCart, onToggleWishlist, onView }
       <div className="relative grid h-44 place-items-center overflow-hidden bg-slate-900">
         {imageUrl ? (
           <img
-            className="h-full w-full object-cover opacity-90 transition duration-500 group-hover:scale-105"
+            className={`h-full w-full opacity-90 transition duration-500 group-hover:scale-105 ${
+              product.productId === 'seed-oneplus-y1s-pro-43' ? 'bg-white object-contain' : 'object-cover'
+            }`}
             src={imageUrl}
             alt={product.title}
             onError={(event) => {

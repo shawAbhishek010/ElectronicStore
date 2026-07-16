@@ -15,7 +15,14 @@ public class OrderDto {
     private String orderId;
     private String orderStatus="PENDING";
     private String paymentStatus="NOT PAID";
-    private int orderAmount;
+    private long orderAmount;
+    private String razorpayOrderId;
+    private String razorpayPaymentId;
+    private String razorpaySignature;
+    private String razorpayFailedPaymentId;
+    private String paymentFailureCode;
+    private String paymentFailureReason;
+    private String paymentFailureDescription;
     private String billingAddress;
     private String billingPhone;
     private String billingName;

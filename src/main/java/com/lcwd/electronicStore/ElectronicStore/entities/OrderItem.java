@@ -8,7 +8,13 @@ import lombok.*;
 @Setter
 @Entity
 @Builder
-@Table(name = "order_items")
+@Table(
+        name = "order_items",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_order_item_order_product",
+                columnNames = {"order_id", "product_id"}
+        )
+)
 public class OrderItem {
 
     @Id
@@ -17,9 +23,10 @@ public class OrderItem {
 
     private  int quantity;
 
-    private  int totalPrice;
+    @Column(columnDefinition = "BIGINT")
+    private long totalPrice;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "product_id")
     private  Product product;
 

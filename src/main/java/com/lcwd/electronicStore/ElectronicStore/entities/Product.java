@@ -23,8 +23,11 @@ public class Product {
     private String title;
     @Column(length = 10000)
     private String description;
-    private int price;
-    private int discountedPrice;
+    @Column(columnDefinition = "BIGINT")
+    private long price;
+
+    @Column(columnDefinition = "BIGINT")
+    private long discountedPrice;
     private int quantity;
     private LocalDateTime addedDate;
     // Indicates whether product is visible/active for users

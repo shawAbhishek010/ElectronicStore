@@ -24,7 +24,24 @@ public class Order {
 
     private String paymentStatus;
 
-    private int orderAmount;
+    @Column(columnDefinition = "BIGINT")
+    private long orderAmount;
+
+    private String razorpayOrderId;
+
+    private String razorpayPaymentId;
+
+    @Column(length = 1000)
+    private String razorpaySignature;
+
+    private String razorpayFailedPaymentId;
+
+    private String paymentFailureCode;
+
+    private String paymentFailureReason;
+
+    @Column(length = 1000)
+    private String paymentFailureDescription;
 
     @Column(length = 1000)
     private String billingAddress;
