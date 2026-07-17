@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.dtos;
 
+/*
+Purpose:
+Transfers a single cart line item with quantity, total price, and product details.
+*/
 import lombok.*;
 
 @Getter

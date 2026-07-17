@@ -3,6 +3,7 @@ package com.lcwd.electronicStore.ElectronicStore.exceptions;
 import com.lcwd.electronicStore.ElectronicStore.dtos.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
@@ -67,6 +68,17 @@ public class GlobalExceptionHandler {
 
         // Step 2: Return 401 because authentication failed.
         return new ResponseEntity<>(apiResponse, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse> accessDeniedExceptionHandler(AccessDeniedException ex) {
+        ApiResponse apiResponse = ApiResponse.builder()
+                .message("Forbidden: You do not have permission to access this resource")
+                .status(HttpStatus.FORBIDDEN)
+                .successs(false)
+                .build();
+
+        return new ResponseEntity<>(apiResponse, HttpStatus.FORBIDDEN);
     }
 
 }

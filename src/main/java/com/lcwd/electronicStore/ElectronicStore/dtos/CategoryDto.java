@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.dtos;
 
+/*
+Purpose:
+Transfers category information between category APIs and the frontend.
+*/
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;

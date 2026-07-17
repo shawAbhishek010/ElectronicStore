@@ -1,4 +1,8 @@
 package com.lcwd.electronicStore.ElectronicStore.entities;
+/*
+Purpose:
+Represents one product line inside a user's cart.
+*/
 import jakarta.persistence.*;
 import lombok.*;
 

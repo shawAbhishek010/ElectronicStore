@@ -1,3 +1,7 @@
+/*
+Purpose:
+Wraps public catalog API calls for categories and product search/listing.
+*/
 import apiClient from './apiClient.js'
 
 export const getCategories = async () => {

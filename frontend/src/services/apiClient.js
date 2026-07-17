@@ -45,6 +45,7 @@ apiClient.interceptors.response.use(
       error.response?.data?.message ||
       error.response?.data?.email ||
       error.response?.data?.password ||
+      error.response?.data?.role ||
       'Something went wrong. Please try again.'
 
     return Promise.reject(new Error(message))

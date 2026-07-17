@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.repositories;
 
+/*
+Purpose:
+Provides database access and search operations for product categories.
+*/
 import com.lcwd.electronicStore.ElectronicStore.entities.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
 

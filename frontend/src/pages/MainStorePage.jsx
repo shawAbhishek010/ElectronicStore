@@ -1,3 +1,7 @@
+/*
+Purpose:
+Renders the customer storefront with catalog browsing, cart, wishlist, checkout, orders, and profile history.
+*/
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
@@ -18,7 +22,6 @@ import {
   FiPercent,
   FiPhone,
   FiPlus,
-  FiRefreshCw,
   FiSave,
   FiSearch,
   FiShield,
@@ -33,6 +36,7 @@ import { useAuth } from '../hooks/useAuth.js'
 import { getCategories, getProducts } from '../services/catalogService.js'
 import { addCartItem, getCart, removeCartItem, updateCartItemQuantity } from '../services/cartService.js'
 import {
+  confirmDelivery,
   createRazorpayOrder,
   getUserOrders,
   reportRazorpayPaymentFailure,
@@ -169,6 +173,14 @@ const getProductImage = (product) =>
     : product.productImageName
       ? `${apiBaseUrl}/products/image/${product.productId}`
       : getProductFallbackImage(product)
+
+const formatOrderStatus = (status) => (status === 'DISPATCHED' ? 'SHIPPED' : status)
+const getProfileAvatar = (user) => {
+  const seed = encodeURIComponent(user?.email || user?.userId || user?.name || 'sparkgadget-user')
+  return `https://api.dicebear.com/9.x/thumbs/svg?seed=${seed}&backgroundColor=0ea5e9,22d3ee,6366f1`
+}
+const isCompletedOrder = (order) => order.orderStatus === 'COMPLETED'
+const isCurrentOrder = (order) => !isCompletedOrder(order) && order.paymentStatus !== 'PAYMENT_FAILED'
 
 const heroSlides = [
   {
@@ -340,6 +352,8 @@ function MainStorePage() {
 
   const cartItems = useMemo(() => cart.items || [], [cart.items])
   const wishlistIds = useMemo(() => new Set(wishlist.map((product) => product.productId)), [wishlist])
+  const currentOrders = useMemo(() => orders.filter(isCurrentOrder), [orders])
+  const completedOrders = useMemo(() => orders.filter(isCompletedOrder), [orders])
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0)
   const cartTotal = cartItems.reduce((total, item) => total + item.totalPrice, 0)
   const uniqueCategories = useMemo(() => {
@@ -637,6 +651,19 @@ function MainStorePage() {
     setCheckoutProcessing(false)
   }
 
+  const confirmOrderDelivery = async (orderId) => {
+    setActionStatus('')
+    try {
+      const updatedOrder = await confirmDelivery(orderId)
+      setOrders((current) =>
+        current.map((order) => (order.orderId === updatedOrder.orderId ? updatedOrder : order)),
+      )
+      setActionStatus('Delivery confirmed. Order completed.')
+    } catch (error) {
+      setActionStatus(error.message)
+    }
+  }
+
   const handleLogout = () => {
     logout()
     navigate('/auth')
@@ -672,10 +699,10 @@ function MainStorePage() {
           </nav>
 
           <div className="relative flex items-center gap-2">
-            <HeaderButton active={activePanel === 'profile'} onClick={() => setActivePanel(activePanel === 'profile' ? null : 'profile')} label={user?.name || 'Profile'} icon={FiUser} />
+            <HeaderButton active={activePanel === 'profile'} onClick={() => setActivePanel(activePanel === 'profile' ? null : 'profile')} label={user?.name || 'Profile'} icon={FiUser} avatar={getProfileAvatar(user)} />
             <IconButton active={activePanel === 'wishlist'} onClick={() => setActivePanel(activePanel === 'wishlist' ? null : 'wishlist')} label="Wishlist" icon={FiHeart} count={wishlist.length} />
             <IconButton active={activePanel === 'cart'} onClick={() => setActivePanel(activePanel === 'cart' ? null : 'cart')} label="Cart" icon={FiShoppingCart} count={cartCount} />
-            <IconButton active={activePanel === 'orders'} onClick={() => setActivePanel(activePanel === 'orders' ? null : 'orders')} label="Orders" icon={FiPackage} count={orders.length} />
+            <IconButton active={activePanel === 'orders'} onClick={() => setActivePanel(activePanel === 'orders' ? null : 'orders')} label="Orders" icon={FiPackage} count={currentOrders.length} />
             <IconButton onClick={handleLogout} label="Logout" icon={FiLogOut} />
 
             {activePanel === 'wishlist' && (
@@ -734,29 +761,28 @@ function MainStorePage() {
             )}
 
             {activePanel === 'orders' && (
-              <HeaderPanel title="Orders" onClose={() => setActivePanel(null)}>
-                {orders.length ? (
+              <HeaderPanel title="Current Orders" onClose={() => setActivePanel(null)}>
+                {currentOrders.length ? (
                   <div className="grid gap-3">
-                    {orders.map((order) => (
-                      <div key={order.orderId} className="rounded-lg border border-white/10 bg-white/[0.04] p-3">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm font-black text-white">{currency.format(order.orderAmount)}</p>
-                          <span className="rounded-lg bg-cyan-400/10 px-2 py-1 text-xs font-black text-cyan-200">{order.orderStatus}</span>
-                        </div>
-                        <p className="mt-2 text-xs font-semibold text-slate-400">{order.billingName} - {order.billingPhone}</p>
-                        <p className="mt-1 text-xs font-bold text-cyan-200">Payment: {order.paymentStatus || 'PENDING'}</p>
-                        <p className="mt-1 text-xs font-semibold text-slate-500">{order.orderItems?.length || 0} products</p>
-                      </div>
+                    {currentOrders.map((order) => (
+                      <OrderSummaryCard key={order.orderId} order={order} onConfirmDelivery={confirmOrderDelivery} />
                     ))}
                   </div>
                 ) : (
-                  <EmptyState text="Orders created from checkout will appear here." />
+                  <EmptyState text="No current orders. Completed orders are in profile history." />
                 )}
               </HeaderPanel>
             )}
 
             {activePanel === 'profile' && (
               <HeaderPanel title="Profile" onClose={() => setActivePanel(null)}>
+                <div className="mb-4 flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-3">
+                  <img className="h-12 w-12 rounded-lg border border-cyan-300/25 bg-slate-950 object-cover" src={getProfileAvatar(user)} alt="" />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-white">{user?.name || 'SparkGadget User'}</p>
+                    <p className="truncate text-xs font-bold text-cyan-200">{user?.email}</p>
+                  </div>
+                </div>
                 <form className="grid gap-3" onSubmit={saveProfile}>
                   {profileStatus.message && <StatusMessage type={profileStatus.type} message={profileStatus.message} />}
                   <PanelInput label="Name" value={profileForm.name} onChange={(value) => setProfileForm({ ...profileForm, name: value })} />
@@ -779,6 +805,21 @@ function MainStorePage() {
                     {profileLoading ? 'Saving...' : 'Save Profile'}
                   </button>
                 </form>
+                <div className="mt-5 border-t border-white/10 pt-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="text-sm font-black uppercase text-slate-300">Order History</p>
+                    <span className="rounded-lg bg-cyan-400/10 px-2 py-1 text-xs font-black text-cyan-200">{completedOrders.length}</span>
+                  </div>
+                  {completedOrders.length ? (
+                    <div className="grid gap-3">
+                      {completedOrders.map((order) => (
+                        <OrderSummaryCard key={order.orderId} order={order} />
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyState text="Completed orders will appear here." />
+                  )}
+                </div>
               </HeaderPanel>
             )}
           </div>
@@ -828,10 +869,6 @@ function MainStorePage() {
                 <button type="button" onClick={() => document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' })} className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-400 px-5 py-3 text-sm font-black text-white shadow-lg shadow-cyan-500/20">
                   <FiGrid />
                   Browse catalog
-                </button>
-                <button type="button" onClick={refreshStore} className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/8 px-5 py-3 text-sm font-black text-white backdrop-blur transition hover:border-cyan-300/40">
-                  <FiRefreshCw />
-                  Refresh APIs
                 </button>
               </div>
             </div>
@@ -1041,10 +1078,14 @@ function MainStorePage() {
   )
 }
 
-function HeaderButton({ active, onClick, label, icon: Icon }) {
+function HeaderButton({ active, onClick, label, icon: Icon, avatar }) {
   return (
     <button type="button" onClick={onClick} className={`hidden items-center gap-2 rounded-lg border px-3 py-2 text-sm font-bold transition md:flex ${active ? 'border-cyan-300 bg-cyan-400/10 text-cyan-100' : 'border-white/10 bg-white/5 text-slate-200 hover:border-cyan-300/40'}`}>
-      <Icon className="text-cyan-300" />
+      {avatar ? (
+        <img className="h-6 w-6 rounded-md border border-cyan-300/25 bg-slate-950 object-cover" src={avatar} alt="" />
+      ) : (
+        <Icon className="text-cyan-300" />
+      )}
       {label}
     </button>
   )
@@ -1073,6 +1114,26 @@ function HeaderPanel({ title, children, onClose }) {
       <div className="soft-scrollbar min-h-0 overflow-y-auto pr-1">
         {children}
       </div>
+    </div>
+  )
+}
+
+function OrderSummaryCard({ order, onConfirmDelivery }) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-black text-white">{currency.format(order.orderAmount)}</p>
+        <span className="rounded-lg bg-cyan-400/10 px-2 py-1 text-xs font-black text-cyan-200">{formatOrderStatus(order.orderStatus)}</span>
+      </div>
+      <p className="mt-2 text-xs font-semibold text-slate-400">{order.billingName} - {order.billingPhone}</p>
+      <p className="mt-1 text-xs font-bold text-cyan-200">Payment: {order.paymentStatus || 'PENDING'}</p>
+      <p className="mt-1 text-xs font-semibold text-slate-500">{order.orderItems?.length || 0} products</p>
+      {order.orderStatus === 'DELIVERED' && onConfirmDelivery && (
+        <button type="button" onClick={() => onConfirmDelivery(order.orderId)} className="mt-3 flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-emerald-500 text-xs font-black text-white">
+          <FiCheckCircle />
+          Confirm Delivery
+        </button>
+      )}
     </div>
   )
 }

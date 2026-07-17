@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.entities;
 
+/*
+Purpose:
+Represents a sellable catalog product with pricing, stock, image, and category data.
+*/
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,3 +1,7 @@
+/*
+Purpose:
+Wraps user profile API calls for loading and updating the current user.
+*/
 import apiClient from './apiClient.js'
 
 export const getUserProfile = async (userId) => {

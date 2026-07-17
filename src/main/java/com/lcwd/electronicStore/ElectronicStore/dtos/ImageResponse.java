@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.dtos;
 
+/*
+Purpose:
+Returns uploaded image metadata and status messages.
+*/
 import lombok.*;
 import org.springframework.http.HttpStatus;
 

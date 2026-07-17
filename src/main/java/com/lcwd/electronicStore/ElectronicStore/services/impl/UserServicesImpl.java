@@ -48,6 +48,7 @@ public class UserServicesImpl implements UserService {
 
         // Step 2: Encrypt password before saving because plain text passwords must never be stored.
         userDto.setPassword(getPasswordForStorage(userDto.getPassword()));
+        userDto.setRole(normalizeRole(userDto.getRole()));
 
         // Step 3: Convert dto->entity, save user, then convert entity->dto for API response.
         User user = dtoToEntity(userDto);
@@ -127,7 +128,8 @@ public class UserServicesImpl implements UserService {
                 .userId(save.getUserId())
                 .email(save.getEmail())
                 .name(save.getName())             // using builder to avoid diff constructors for method overloading
-                .password(save.getPassword())
+                .password(null)
+                .role(normalizeRole(save.getRole()))
                 .about(save.getAbout())
                 .gender(save.getGender())
                 .build();
@@ -147,6 +149,15 @@ public class UserServicesImpl implements UserService {
 
         // Step 3: Convert raw password into a BCrypt hash before database storage.
         return passwordEncoder.encode(password);
+    }
+
+    private String normalizeRole(String role) {
+        if (role == null || role.isBlank()) {
+            return "ROLE_USER";
+        }
+
+        String cleanedRole = role.trim().toUpperCase();
+        return cleanedRole.startsWith("ROLE_") ? cleanedRole : "ROLE_" + cleanedRole;
     }
 }
 

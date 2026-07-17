@@ -1,6 +1,10 @@
 package com.lcwd.electronicStore.ElectronicStore.services.impl;
 
 
+/*
+Purpose:
+Implements product catalog management, search, category assignment, and image cleanup.
+*/
 import com.lcwd.electronicStore.ElectronicStore.dtos.PageableResponse;
 import com.lcwd.electronicStore.ElectronicStore.dtos.ProductDto;
 import com.lcwd.electronicStore.ElectronicStore.entities.Category;

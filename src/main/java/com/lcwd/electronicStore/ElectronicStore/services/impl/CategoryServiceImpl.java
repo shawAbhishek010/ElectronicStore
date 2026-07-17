@@ -1,4 +1,8 @@
 package com.lcwd.electronicStore.ElectronicStore.services.impl;
+/*
+Purpose:
+Implements category creation, update, delete, pagination, and search.
+*/
 import com.lcwd.electronicStore.ElectronicStore.dtos.CategoryDto;
 import com.lcwd.electronicStore.ElectronicStore.dtos.PageableResponse;
 import com.lcwd.electronicStore.ElectronicStore.entities.Category;

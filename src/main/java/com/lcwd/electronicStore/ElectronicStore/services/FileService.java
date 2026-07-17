@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.services;
 
+/*
+Purpose:
+Defines file upload and retrieval operations for product images.
+*/
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.FileNotFoundException;

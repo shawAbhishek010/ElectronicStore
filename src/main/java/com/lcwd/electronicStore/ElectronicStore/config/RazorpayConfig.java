@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.config;
 
+/*
+Purpose:
+Loads Razorpay payment settings from application properties and environment variables.
+*/
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;

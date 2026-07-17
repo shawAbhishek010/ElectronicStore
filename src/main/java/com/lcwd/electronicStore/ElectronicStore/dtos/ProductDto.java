@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.dtos;
 
+/*
+Purpose:
+Transfers product catalog, pricing, inventory, and category data.
+*/
 import lombok.*;
 import java.time.LocalDateTime;
 

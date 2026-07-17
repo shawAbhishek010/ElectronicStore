@@ -1,17 +1,23 @@
 package com.lcwd.electronicStore.ElectronicStore.controller;
+/*
+Purpose:
+Exposes order, Razorpay payment, admin status update, and user delivery confirmation APIs.
+*/
 import com.lcwd.electronicStore.ElectronicStore.dtos.ApiResponse;
 import com.lcwd.electronicStore.ElectronicStore.dtos.CreateOrderRequest;
 import com.lcwd.electronicStore.ElectronicStore.dtos.OrderDto;
 import com.lcwd.electronicStore.ElectronicStore.dtos.PageableResponse;
-import com.lcwd.electronicStore.ElectronicStore.dtos.RazorpayOrderResponse;
-import com.lcwd.electronicStore.ElectronicStore.dtos.RazorpayPaymentFailureRequest;
-import com.lcwd.electronicStore.ElectronicStore.dtos.RazorpayPaymentVerificationRequest;
-import com.lcwd.electronicStore.ElectronicStore.dtos.RazorpayPaymentVerificationResponse;
+import com.lcwd.electronicStore.ElectronicStore.dtos.RazorpayPaymentDto.FailureRequest;
+import com.lcwd.electronicStore.ElectronicStore.dtos.RazorpayPaymentDto.OrderResponse;
+import com.lcwd.electronicStore.ElectronicStore.dtos.RazorpayPaymentDto.VerificationRequest;
+import com.lcwd.electronicStore.ElectronicStore.dtos.RazorpayPaymentDto.VerificationResponse;
 import com.lcwd.electronicStore.ElectronicStore.services.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,32 +31,37 @@ public class OrderController {
 
     //create
     @PostMapping
+    @PreAuthorize("hasRole('USER') and @securityGuard.isCurrentUserId(#request.userId)")
     public ResponseEntity<OrderDto> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         OrderDto order = orderService.createOrder(request);
         return new ResponseEntity<>(order, HttpStatus.CREATED);
     }
 
     @PostMapping("/razorpay")
-    public ResponseEntity<RazorpayOrderResponse> createRazorpayOrder(@Valid @RequestBody CreateOrderRequest request) {
-        RazorpayOrderResponse response = orderService.createRazorpayOrder(request);
+    @PreAuthorize("hasRole('USER') and @securityGuard.isCurrentUserId(#request.userId)")
+    public ResponseEntity<OrderResponse> createRazorpayOrder(@Valid @RequestBody CreateOrderRequest request) {
+        OrderResponse response = orderService.createRazorpayOrder(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PostMapping("/razorpay/verify")
-    public ResponseEntity<RazorpayPaymentVerificationResponse> verifyRazorpayPayment(
-            @Valid @RequestBody RazorpayPaymentVerificationRequest request
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<VerificationResponse> verifyRazorpayPayment(
+            @Valid @RequestBody VerificationRequest request
     ) {
         return ResponseEntity.ok(orderService.verifyRazorpayPayment(request));
     }
 
     @PostMapping("/razorpay/failure")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<OrderDto> recordRazorpayPaymentFailure(
-            @Valid @RequestBody RazorpayPaymentFailureRequest request
+            @Valid @RequestBody FailureRequest request
     ) {
         return ResponseEntity.ok(orderService.recordRazorpayPaymentFailure(request));
     }
 
     @DeleteMapping("/{orderId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse> removeOrder(@PathVariable String orderId) {
         orderService.removeOrder(orderId);
         ApiResponse responseMessage = ApiResponse.builder()
@@ -63,6 +74,7 @@ public class OrderController {
     }
     //UPDATE ORDER STATUS
     @PutMapping("/{orderId}/status")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<OrderDto> updateStatus(
             @PathVariable String orderId,
             @RequestParam String status
@@ -70,15 +82,26 @@ public class OrderController {
         return ResponseEntity.ok(orderService.updateOrderStatus(orderId, status));
     }
 
+    @PutMapping("/{orderId}/confirm-delivery")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<OrderDto> confirmDelivery(
+            @PathVariable String orderId,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(orderService.confirmDelivery(orderId, authentication.getName()));
+    }
+
     //get orders of the user
 
     @GetMapping("/users/{userId}")
+    @PreAuthorize("@securityGuard.isCurrentUserId(#userId)")
     public ResponseEntity<List<OrderDto>> getOrdersOfUser(@PathVariable String userId) {
         List<OrderDto> ordersOfUser = orderService.getOrdersOfUser(userId);
         return new ResponseEntity<>(ordersOfUser, HttpStatus.OK);
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PageableResponse<OrderDto>> getOrders(
             @RequestParam(value = "pageNumber", defaultValue = "0", required = false) int pageNumber,
             @RequestParam(value = "pageSize", defaultValue = "10", required = false) int pageSize,

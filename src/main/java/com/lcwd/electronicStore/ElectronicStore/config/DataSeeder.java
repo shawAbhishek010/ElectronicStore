@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.config;
 
+/*
+Purpose:
+Seeds default catalog data so the store has starter categories and products.
+*/
 import com.lcwd.electronicStore.ElectronicStore.entities.Category;
 import com.lcwd.electronicStore.ElectronicStore.entities.Product;
 import com.lcwd.electronicStore.ElectronicStore.repositories.CategoryRepository;

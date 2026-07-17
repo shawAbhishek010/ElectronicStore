@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.repositories;
 
+/*
+Purpose:
+Provides database access for users, including email and name lookups.
+*/
 import com.lcwd.electronicStore.ElectronicStore.entities.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 

@@ -1,6 +1,10 @@
 package com.lcwd.electronicStore.ElectronicStore.entities;
 
 
+/*
+Purpose:
+Represents a user's shopping cart and its cart items in the database.
+*/
 import jakarta.persistence.*;
 import lombok.*;
 

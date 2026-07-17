@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.services;
 
+/*
+Purpose:
+Defines cart business operations used by cart controllers.
+*/
 import com.lcwd.electronicStore.ElectronicStore.dtos.AddItemToCartRequest;
 import com.lcwd.electronicStore.ElectronicStore.dtos.CartDto;
 

@@ -1,4 +1,8 @@
 package com.lcwd.electronicStore.ElectronicStore.entities;
+/*
+Purpose:
+Represents a product category and its related products.
+*/
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

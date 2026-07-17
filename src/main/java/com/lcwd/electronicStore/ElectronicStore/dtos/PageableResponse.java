@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.dtos;
 
+/*
+Purpose:
+Wraps paginated API results with page metadata.
+*/
 import lombok.*;
 
 import java.util.List;

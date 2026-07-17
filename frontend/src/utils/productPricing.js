@@ -1,3 +1,7 @@
+/*
+Purpose:
+Provides product pricing helpers for display price and discount percentage calculations.
+*/
 export const getProductPrice = (product) => product?.discountedPrice || product?.price || 0
 
 export const getDiscountPercent = (product) => {

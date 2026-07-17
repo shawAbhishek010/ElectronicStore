@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.dtos;
 
+/*
+Purpose:
+Carries checkout billing and cart/user ids when creating an order.
+*/
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 

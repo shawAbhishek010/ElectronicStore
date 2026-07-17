@@ -2,11 +2,13 @@ package com.lcwd.electronicStore.ElectronicStore.security;
 
 import com.lcwd.electronicStore.ElectronicStore.entities.User;
 import com.lcwd.electronicStore.ElectronicStore.repositories.UserRepository;
-import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /*
 Purpose:
@@ -31,12 +33,19 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
 
-        // Step 2: Return Spring Security's built-in UserDetails object.
-        // Step 3: Keep authorities empty for Feature 1; roles will be added in the RBAC feature.
+        String role = normalizeRole(user.getRole());
+
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),
-                AuthorityUtils.NO_AUTHORITIES
+                List.of(new SimpleGrantedAuthority(role))
         );
+    }
+
+    private String normalizeRole(String role) {
+        if (role == null || role.isBlank()) {
+            return "ROLE_USER";
+        }
+        return role.startsWith("ROLE_") ? role : "ROLE_" + role.toUpperCase();
     }
 }

@@ -1,3 +1,7 @@
+/*
+Purpose:
+Wraps product-view APIs used for recently viewed product tracking.
+*/
 import apiClient from './apiClient.js'
 
 export const getRecentlyViewed = async (userId) => {

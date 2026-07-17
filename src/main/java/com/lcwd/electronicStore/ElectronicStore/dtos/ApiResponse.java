@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.dtos;
 
+/*
+Purpose:
+Standard success/error response body used by controllers.
+*/
 import lombok.*;
 import org.springframework.http.HttpStatus;
 

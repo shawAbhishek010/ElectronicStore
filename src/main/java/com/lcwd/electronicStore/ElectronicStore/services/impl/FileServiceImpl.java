@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.services.impl;
 
+/*
+Purpose:
+Implements local image upload and retrieval for product media.
+*/
 import com.lcwd.electronicStore.ElectronicStore.exceptions.BadApiRequestException;
 import com.lcwd.electronicStore.ElectronicStore.services.FileService;
 import org.slf4j.Logger;

@@ -3,7 +3,7 @@ package com.lcwd.electronicStore.ElectronicStore.services.impl;
 import com.lcwd.electronicStore.ElectronicStore.config.RazorpayConfig;
 import com.lcwd.electronicStore.ElectronicStore.dtos.CreateOrderRequest;
 import com.lcwd.electronicStore.ElectronicStore.dtos.OrderDto;
-import com.lcwd.electronicStore.ElectronicStore.dtos.RazorpayOrderResponse;
+import com.lcwd.electronicStore.ElectronicStore.dtos.RazorpayPaymentDto.OrderResponse;
 import com.lcwd.electronicStore.ElectronicStore.entities.Cart;
 import com.lcwd.electronicStore.ElectronicStore.entities.CartItem;
 import com.lcwd.electronicStore.ElectronicStore.entities.Order;
@@ -14,12 +14,16 @@ import com.lcwd.electronicStore.ElectronicStore.repositories.CartRepository;
 import com.lcwd.electronicStore.ElectronicStore.repositories.OrderRepository;
 import com.lcwd.electronicStore.ElectronicStore.repositories.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
@@ -60,10 +64,23 @@ class OrderServiceImplTest {
         ReflectionTestUtils.setField(orderService, "razorpayConfig", config);
     }
 
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
     void reusesLatestPendingRazorpayOrderWhenCartSnapshotMatches() {
         User user = new User();
         user.setUserId("user-1");
+        user.setEmail("customer@example.com");
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(
+                        "customer@example.com",
+                        null,
+                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                )
+        );
 
         Product product = new Product();
         product.setProductId("product-1");
@@ -115,7 +132,7 @@ class OrderServiceImplTest {
         when(orderRepository.save(pendingOrder)).thenReturn(pendingOrder);
         when(modelMapper.map(pendingOrder, OrderDto.class)).thenReturn(orderDto);
 
-        RazorpayOrderResponse response = orderService.createRazorpayOrder(request);
+        OrderResponse response = orderService.createRazorpayOrder(request);
 
         assertEquals("order_existing", response.getRazorpayOrderId());
         assertEquals(20_000_000L, response.getAmount());

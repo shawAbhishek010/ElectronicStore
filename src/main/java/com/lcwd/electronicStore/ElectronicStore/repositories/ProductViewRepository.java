@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.repositories;
 
+/*
+Purpose:
+Provides database access for recently viewed product tracking.
+*/
 import com.lcwd.electronicStore.ElectronicStore.entities.ProductView;
 import com.lcwd.electronicStore.ElectronicStore.entities.User;
 import org.springframework.data.jpa.repository.JpaRepository;

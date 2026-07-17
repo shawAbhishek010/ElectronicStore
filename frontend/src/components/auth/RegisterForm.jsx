@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { FiLock, FiMail, FiPhone, FiUser } from 'react-icons/fi'
+import { FiLock, FiMail, FiPhone, FiShield, FiUser } from 'react-icons/fi'
 import { useAuth } from '../../hooks/useAuth.js'
 import FormInput from '../common/FormInput.jsx'
 import PrimaryButton from '../common/PrimaryButton.jsx'
@@ -30,10 +30,14 @@ function RegisterForm({ onLogin }) {
       phone: '',
       password: '',
       confirmPassword: '',
+      role: 'ROLE_USER',
+      adminPortalPassword: '',
     },
   })
 
   const password = watch('password')
+  const selectedRole = watch('role')
+  const isAdmin = selectedRole === 'ROLE_ADMIN'
 
   const onSubmit = async (values) => {
     setFormError('')
@@ -44,6 +48,8 @@ function RegisterForm({ onLogin }) {
         name: values.name,
         email: values.email,
         password: values.password,
+        role: values.role,
+        adminPortalPassword: values.adminPortalPassword,
         gender: 'Other',
         about: `Phone: ${values.phone}`,
       })
@@ -151,6 +157,21 @@ function RegisterForm({ onLogin }) {
         />
       </div>
 
+      <RoleSelector register={register} selectedRole={selectedRole} />
+
+      {isAdmin && (
+        <FormInput
+          label="Admin Portal Password"
+          type="password"
+          placeholder="Enter admin verification password"
+          icon={FiShield}
+          error={errors.adminPortalPassword}
+          register={register('adminPortalPassword', {
+            required: 'Admin portal password is required',
+          })}
+        />
+      )}
+
       <PrimaryButton type="submit" loading={isSubmitting}>
         Register
       </PrimaryButton>
@@ -162,6 +183,26 @@ function RegisterForm({ onLogin }) {
         </button>
       </p>
     </form>
+  )
+}
+
+function RoleSelector({ register, selectedRole }) {
+  return (
+    <div className="grid gap-2">
+      <p className="text-sm font-bold text-slate-700">Account type</p>
+      <div className="grid grid-cols-2 rounded-2xl bg-slate-100 p-1">
+        <label className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-black transition ${selectedRole === 'ROLE_USER' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>
+          <input className="sr-only" type="radio" value="ROLE_USER" {...register('role')} />
+          <FiUser />
+          User
+        </label>
+        <label className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-black transition ${selectedRole === 'ROLE_ADMIN' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>
+          <input className="sr-only" type="radio" value="ROLE_ADMIN" {...register('role')} />
+          <FiShield />
+          Admin
+        </label>
+      </div>
+    </div>
   )
 }
 

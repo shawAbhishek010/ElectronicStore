@@ -1,3 +1,7 @@
+/*
+Purpose:
+Wraps cart API calls for loading, adding, updating, and removing cart items.
+*/
 import apiClient from './apiClient.js'
 
 export const getCart = async (userId) => {

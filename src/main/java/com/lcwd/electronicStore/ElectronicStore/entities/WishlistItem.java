@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.entities;
 
+/*
+Purpose:
+Represents one product saved in a user's wishlist.
+*/
 import jakarta.persistence.*;
 import lombok.*;
 

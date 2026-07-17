@@ -1,6 +1,10 @@
 package com.lcwd.electronicStore.ElectronicStore.controller;
 
 
+/*
+Purpose:
+Exposes category catalog APIs and admin category/product assignment operations.
+*/
 import com.lcwd.electronicStore.ElectronicStore.dtos.ApiResponse;
 import com.lcwd.electronicStore.ElectronicStore.dtos.CategoryDto;
 import com.lcwd.electronicStore.ElectronicStore.dtos.PageableResponse;
@@ -11,6 +15,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +31,7 @@ public class CategoryController {
 
     //create
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CategoryDto> createCategory(@Valid @RequestBody CategoryDto categoryDto) {
         //call service to   save object
         CategoryDto categoryDto1 = categoryService.create(categoryDto);
@@ -34,6 +40,7 @@ public class CategoryController {
 
     //update
     @PutMapping("/{categoryId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CategoryDto> updateCategory(
             @PathVariable String categoryId,
             @RequestBody CategoryDto categoryDto
@@ -44,6 +51,7 @@ public class CategoryController {
 
     //delete
     @DeleteMapping("/{categoryId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse> deleteCategory(
             @PathVariable String categoryId
     ) {
@@ -85,6 +93,7 @@ public class CategoryController {
 
     //create product with category_id
     @PostMapping("/{categoryId}/products")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductDto> createProductWithCategory(
             @PathVariable("categoryId") String categoryId,
             @RequestBody ProductDto dto
@@ -95,6 +104,7 @@ public class CategoryController {
 
     //update category of product
     @PutMapping("/{categoryId}/products/{productId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductDto> updateCategoryOfProduct(
             @PathVariable String categoryId,
             @PathVariable String productId

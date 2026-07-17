@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.repositories;
 
+/*
+Purpose:
+Provides database access for carts and lookup by owning user.
+*/
 import com.lcwd.electronicStore.ElectronicStore.entities.Cart;
 import com.lcwd.electronicStore.ElectronicStore.entities.User;
 import org.springframework.data.jpa.repository.JpaRepository;

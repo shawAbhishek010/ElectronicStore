@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.dtos;
 
+/*
+Purpose:
+Transfers user profile, role, and registration/login-related fields.
+*/
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -20,6 +24,8 @@ public class UserDto {
     private String email;
     @NotBlank(message = "password is blank")
     private String password;
+    private String role;
+    private String adminPortalPassword;
     @Size(min = 4, max = 6, message = "Invalid gender input")
     private String gender;
     @NotBlank(message = "write Something")

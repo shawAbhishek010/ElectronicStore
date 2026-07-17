@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.controller;
 
+/*
+Purpose:
+Exposes wishlist APIs for saving, listing, and removing products for a user.
+*/
 import com.lcwd.electronicStore.ElectronicStore.dtos.ApiResponse;
 import com.lcwd.electronicStore.ElectronicStore.dtos.ProductDto;
 import com.lcwd.electronicStore.ElectronicStore.entities.Product;
@@ -12,6 +16,7 @@ import com.lcwd.electronicStore.ElectronicStore.repositories.WishlistItemReposit
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -37,12 +42,14 @@ public class WishlistController {
     }
 
     @GetMapping("/{userId}")
+    @PreAuthorize("@securityGuard.isCurrentUserId(#userId)")
     public ResponseEntity<List<ProductDto>> getWishlist(@PathVariable String userId) {
         User user = getUser(userId);
         return ResponseEntity.ok(toProductDtos(wishlistItemRepository.findByUserOrderByCreatedAtDesc(user)));
     }
 
     @PostMapping("/{userId}/products/{productId}")
+    @PreAuthorize("@securityGuard.isCurrentUserId(#userId)")
     public ResponseEntity<List<ProductDto>> addToWishlist(@PathVariable String userId, @PathVariable String productId) {
         User user = getUser(userId);
         Product product = getProduct(productId);
@@ -60,6 +67,7 @@ public class WishlistController {
     }
 
     @DeleteMapping("/{userId}/products/{productId}")
+    @PreAuthorize("@securityGuard.isCurrentUserId(#userId)")
     public ResponseEntity<ApiResponse> removeFromWishlist(@PathVariable String userId, @PathVariable String productId) {
         WishlistItem item = wishlistItemRepository.findByUserUserIdAndProductProductId(userId, productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Wishlist item not found !!"));

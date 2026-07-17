@@ -1,4 +1,8 @@
 package com.lcwd.electronicStore.ElectronicStore.helper;
+/*
+Purpose:
+Converts Spring Page objects into the app's pageable DTO response format.
+*/
 import com.lcwd.electronicStore.ElectronicStore.dtos.PageableResponse;
 import com.lcwd.electronicStore.ElectronicStore.dtos.UserDto;
 import org.modelmapper.ModelMapper;

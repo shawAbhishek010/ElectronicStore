@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.controller;
 
+/*
+Purpose:
+Tracks and returns recently viewed products for the current user experience.
+*/
 import com.lcwd.electronicStore.ElectronicStore.dtos.ProductDto;
 import com.lcwd.electronicStore.ElectronicStore.entities.Product;
 import com.lcwd.electronicStore.ElectronicStore.entities.ProductView;
@@ -10,6 +14,7 @@ import com.lcwd.electronicStore.ElectronicStore.repositories.ProductViewReposito
 import com.lcwd.electronicStore.ElectronicStore.repositories.UserRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -35,6 +40,7 @@ public class ProductViewController {
     }
 
     @GetMapping("/{userId}")
+    @PreAuthorize("@securityGuard.isCurrentUserId(#userId)")
     public ResponseEntity<List<ProductDto>> getRecentlyViewed(@PathVariable String userId) {
         User user = getUser(userId);
         List<ProductDto> products = productViewRepository.findTop20ByUserOrderByViewedAtDesc(user)
@@ -45,6 +51,7 @@ public class ProductViewController {
     }
 
     @PostMapping("/{userId}/products/{productId}")
+    @PreAuthorize("@securityGuard.isCurrentUserId(#userId)")
     public ResponseEntity<ProductDto> trackProductView(@PathVariable String userId, @PathVariable String productId) {
         User user = getUser(userId);
         Product product = productRepository.findById(productId)

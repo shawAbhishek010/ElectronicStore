@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.services;
 
+/*
+Purpose:
+Defines category business operations for catalog management.
+*/
 import com.lcwd.electronicStore.ElectronicStore.dtos.CategoryDto;
 import com.lcwd.electronicStore.ElectronicStore.dtos.PageableResponse;
 

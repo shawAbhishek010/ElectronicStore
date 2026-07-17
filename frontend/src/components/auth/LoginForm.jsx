@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { FiLock, FiMail } from 'react-icons/fi'
+import { FiLock, FiMail, FiShield, FiUser } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth.js'
 import FormInput from '../common/FormInput.jsx'
@@ -21,23 +21,28 @@ function LoginForm({ onCreateAccount }) {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
       email: '',
       password: '',
+      role: 'ROLE_USER',
+      adminPortalPassword: '',
     },
   })
+  const selectedRole = watch('role')
+  const isAdmin = selectedRole === 'ROLE_ADMIN'
 
   const onSubmit = async (values) => {
     setFormError('')
     try {
       // Step 1: Send only login credentials to the backend.
-      await login(values)
+      const response = await login(values)
 
       // Step 2: The context stores token/user when backend returns success.
       // Step 3: Send the customer to the storefront.
-      navigate('/store')
+      navigate(response.role === 'ROLE_ADMIN' ? '/admin' : '/store')
     } catch (error) {
       setFormError(error.message)
     }
@@ -88,6 +93,21 @@ function LoginForm({ onCreateAccount }) {
         })}
       />
 
+      <RoleSelector register={register} selectedRole={selectedRole} />
+
+      {isAdmin && (
+        <FormInput
+          label="Admin Portal Password"
+          type="password"
+          placeholder="Enter admin verification password"
+          icon={FiShield}
+          error={errors.adminPortalPassword}
+          register={register('adminPortalPassword', {
+            required: 'Admin portal password is required',
+          })}
+        />
+      )}
+
       <div className="flex items-center justify-between gap-3 text-sm">
         <label className="flex items-center gap-2 font-semibold text-slate-500">
           <input className="h-4 w-4 rounded border-slate-300 text-blue-600" type="checkbox" />
@@ -106,6 +126,26 @@ function LoginForm({ onCreateAccount }) {
         </button>
       </p>
     </form>
+  )
+}
+
+function RoleSelector({ register, selectedRole }) {
+  return (
+    <div className="grid gap-2">
+      <p className="text-sm font-bold text-slate-700">Portal</p>
+      <div className="grid grid-cols-2 rounded-2xl bg-slate-100 p-1">
+        <label className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-black transition ${selectedRole === 'ROLE_USER' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>
+          <input className="sr-only" type="radio" value="ROLE_USER" {...register('role')} />
+          <FiUser />
+          User
+        </label>
+        <label className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-black transition ${selectedRole === 'ROLE_ADMIN' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>
+          <input className="sr-only" type="radio" value="ROLE_ADMIN" {...register('role')} />
+          <FiShield />
+          Admin
+        </label>
+      </div>
+    </div>
   )
 }
 

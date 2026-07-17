@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.helper;
 
+/*
+Purpose:
+Converts payment amounts between rupees and Razorpay paise safely.
+*/
 public final class PaymentAmountHelper {
 
     private static final long PAISE_PER_RUPEE = 100L;

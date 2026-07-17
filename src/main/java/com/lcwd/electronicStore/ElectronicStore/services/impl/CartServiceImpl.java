@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.services.impl;
 
+/*
+Purpose:
+Implements cart behavior including item add, quantity update, remove, clear, and totals.
+*/
 import com.lcwd.electronicStore.ElectronicStore.dtos.AddItemToCartRequest;
 import com.lcwd.electronicStore.ElectronicStore.dtos.CartDto;
 import com.lcwd.electronicStore.ElectronicStore.entities.Cart;

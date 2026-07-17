@@ -1,3 +1,7 @@
+/*
+Purpose:
+Selects products with active discounts for deal sections.
+*/
 import { getDiscountAmount, getDiscountPercent } from './productPricing.js'
 
 export const getDiscountedProducts = (products, limit = 12) => {

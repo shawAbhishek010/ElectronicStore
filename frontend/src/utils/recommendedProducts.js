@@ -1,3 +1,7 @@
+/*
+Purpose:
+Builds personalized recommended products from cart, wishlist, recent views, and catalog data.
+*/
 import { getDiscountPercent, getProductPrice } from './productPricing.js'
 
 const getProductId = (product) => product?.productId

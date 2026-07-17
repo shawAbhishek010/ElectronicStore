@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.services;
 
+/*
+Purpose:
+Defines user profile, registration, lookup, and admin user operations.
+*/
 import com.lcwd.electronicStore.ElectronicStore.dtos.PageableResponse;
 import com.lcwd.electronicStore.ElectronicStore.dtos.UserDto;
 

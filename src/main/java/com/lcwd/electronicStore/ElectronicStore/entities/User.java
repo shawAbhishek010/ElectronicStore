@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.entities;
 
+/*
+Purpose:
+Represents an application account with profile data, role, password, and orders.
+*/
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,9 +27,18 @@ public class User {
     @Column(name = " userEmail", unique = true)
     private String email;
     private String password;
+    private String role = "ROLE_USER";
     private String gender;
     @Column(length = 2000)
     private String about;
     @OneToMany(mappedBy = "user",fetch = FetchType.LAZY,cascade = CascadeType.REMOVE)
     private List<Order> orders=new ArrayList<>();
+
+    @PrePersist
+    @PreUpdate
+    private void normalizeRole() {
+        if (role == null || role.isBlank()) {
+            role = "ROLE_USER";
+        }
+    }
 }

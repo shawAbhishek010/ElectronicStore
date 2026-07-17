@@ -56,12 +56,25 @@ public class SecurityConfig {
         // Step 3: Make authentication stateless so the server does not create HTTP sessions.
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        // Step 4: Keep login/register and read-only catalog APIs public, protect everything else.
+        // Step 4: Keep login/register and read-only catalog APIs public, then split user/admin APIs.
         http.authorizeHttpRequests(request -> request
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/auth/**", "/error").permitAll()
-                .requestMatchers(HttpMethod.POST, "/users/create").permitAll()
                 .requestMatchers(HttpMethod.GET, "/products/**", "/categories/**").permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/products", "/products/image/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/products/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/products/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/categories", "/categories/*/products").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/categories/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/categories/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/orders").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/orders/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/orders/*/status").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/orders", "/orders/razorpay", "/orders/razorpay/verify", "/orders/razorpay/failure").hasRole("USER")
+                .requestMatchers(HttpMethod.GET, "/orders/users/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/orders/*/confirm-delivery").hasRole("USER")
+                .requestMatchers("/carts/**", "/wishlist/**", "/product-views/**").hasRole("USER")
                 .anyRequest().authenticated()
         );
 

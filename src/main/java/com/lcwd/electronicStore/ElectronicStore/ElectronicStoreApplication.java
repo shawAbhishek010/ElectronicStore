@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore;
 
+/*
+Purpose:
+Main Spring Boot entry point that starts the SparkGadget backend application.
+*/
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 

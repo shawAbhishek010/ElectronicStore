@@ -1,4 +1,8 @@
 package com.lcwd.electronicStore.ElectronicStore.dtos;
+/*
+Purpose:
+Transfers cart details, totals, and cart items to the frontend.
+*/
 import lombok.*;
 
 import java.time.LocalDateTime;

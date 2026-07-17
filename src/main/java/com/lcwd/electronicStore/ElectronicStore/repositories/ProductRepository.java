@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.repositories;
 
+/*
+Purpose:
+Provides database access and catalog queries for products.
+*/
 import com.lcwd.electronicStore.ElectronicStore.entities.Category;
 import com.lcwd.electronicStore.ElectronicStore.entities.Product;
 import org.springframework.data.domain.Page;

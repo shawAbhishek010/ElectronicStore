@@ -1,3 +1,7 @@
+/*
+Purpose:
+Wraps wishlist API calls for loading, saving, and removing favorite products.
+*/
 import apiClient from './apiClient.js'
 
 export const getWishlist = async (userId) => {

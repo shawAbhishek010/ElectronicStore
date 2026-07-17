@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.entities;
 
+/*
+Purpose:
+Represents a customer order, payment metadata, delivery status, and order items.
+*/
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,7 +23,7 @@ public class Order {
     @Id
     private String orderId;
 
-    //PENDING,DISPATCHED,DELIVERED
+    //PENDING, PAID, SHIPPED, DELIVERED, COMPLETED
     private String orderStatus;
 
     private String paymentStatus;

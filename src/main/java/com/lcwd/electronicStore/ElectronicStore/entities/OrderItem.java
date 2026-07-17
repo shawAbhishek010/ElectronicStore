@@ -1,4 +1,8 @@
 package com.lcwd.electronicStore.ElectronicStore.entities;
+/*
+Purpose:
+Represents a purchased product line within an order.
+*/
 import jakarta.persistence.*;
 import lombok.*;
 

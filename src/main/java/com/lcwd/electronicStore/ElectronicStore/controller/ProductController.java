@@ -1,6 +1,10 @@
 package com.lcwd.electronicStore.ElectronicStore.controller;
 
 
+/*
+Purpose:
+Exposes product catalog APIs plus admin product management and image upload endpoints.
+*/
 import com.lcwd.electronicStore.ElectronicStore.dtos.ApiResponse;
 import com.lcwd.electronicStore.ElectronicStore.dtos.ImageResponse;
 import com.lcwd.electronicStore.ElectronicStore.dtos.PageableResponse;
@@ -13,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -35,6 +40,7 @@ public class ProductController {
 
     //create
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductDto> createProduct(@RequestBody ProductDto productDto) {
         ProductDto createdProduct = productService.create(productDto);
         return new ResponseEntity<>(createdProduct, HttpStatus.CREATED);
@@ -42,6 +48,7 @@ public class ProductController {
 
     //update
     @PutMapping("/{productId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductDto> updateProduct(@PathVariable String productId, @RequestBody ProductDto productDto) {
         ProductDto updatedProduct = productService.update(productDto, productId);
         return new ResponseEntity<>(updatedProduct, HttpStatus.OK);
@@ -51,6 +58,7 @@ public class ProductController {
     //delete
 
     @DeleteMapping("/{productId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse> delete(@PathVariable String productId) {
         productService.delete(productId);
         ApiResponse responseMessage = ApiResponse.builder().message("Product is deleted successfully !!").status(HttpStatus.OK).successs(true).build();
@@ -110,6 +118,7 @@ public class ProductController {
 
     //upload image
     @PostMapping("/image/{productId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ImageResponse> uploadProductImage(
             @PathVariable String productId,
             @RequestParam("productImage") MultipartFile image

@@ -1,12 +1,21 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+import AdminDashboardPage from '../pages/AdminDashboardPage.jsx'
 import AuthLandingPage from '../pages/AuthLandingPage.jsx'
 import MainStorePage from '../pages/MainStorePage.jsx'
 import { useAuth } from '../hooks/useAuth.js'
 
-function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useAuth()
+const normalizeRole = (role = '') => (role.startsWith('ROLE_') ? role : `ROLE_${role}`).toUpperCase()
 
-  return isAuthenticated ? children : <Navigate to="/login" replace />
+function ProtectedRoute({ children, roles }) {
+  const { isAuthenticated, user } = useAuth()
+
+  if (!isAuthenticated) return <Navigate to="/login" replace />
+
+  if (roles?.length && !roles.includes(normalizeRole(user?.role || 'ROLE_USER'))) {
+    return <Navigate to={normalizeRole(user?.role || '') === 'ROLE_ADMIN' ? '/admin' : '/store'} replace />
+  }
+
+  return children
 }
 
 /*
@@ -27,8 +36,16 @@ function AppRoutes() {
       <Route
         path="/store"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute roles={['ROLE_USER']}>
             <MainStorePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute roles={['ROLE_ADMIN']}>
+            <AdminDashboardPage />
           </ProtectedRoute>
         }
       />

@@ -1,4 +1,8 @@
 package com.lcwd.electronicStore.ElectronicStore.dtos;
+/*
+Purpose:
+Transfers order status, payment details, billing data, and items to the frontend.
+*/
 import lombok.*;
 
 import java.time.LocalDateTime;

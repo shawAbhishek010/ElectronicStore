@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.repositories;
 
+/*
+Purpose:
+Provides database access for wishlist items and user/product wishlist checks.
+*/
 import com.lcwd.electronicStore.ElectronicStore.entities.User;
 import com.lcwd.electronicStore.ElectronicStore.entities.WishlistItem;
 import org.springframework.data.jpa.repository.JpaRepository;

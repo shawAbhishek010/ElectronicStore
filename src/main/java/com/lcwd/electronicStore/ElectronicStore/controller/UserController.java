@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.controller;
 
+/*
+Purpose:
+Exposes user profile APIs and admin user lookup/management operations.
+*/
 import com.lcwd.electronicStore.ElectronicStore.dtos.ApiResponse;
 import com.lcwd.electronicStore.ElectronicStore.dtos.PageableResponse;
 import com.lcwd.electronicStore.ElectronicStore.dtos.UserDto;
@@ -8,6 +12,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +25,7 @@ public class UserController {
 
     // create
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDto> createUser(@Valid @RequestBody UserDto userDto) {
         UserDto user = userService.createUser(userDto);
         return new ResponseEntity<>(user, HttpStatus.CREATED);
@@ -27,6 +33,7 @@ public class UserController {
 
     // update
     @PutMapping("/update/{userId}")
+    @PreAuthorize("@securityGuard.isCurrentUserId(#userId)")
     public ResponseEntity<UserDto> updateUser(@PathVariable("userId") String userId, @Valid @RequestBody UserDto userDto) {
         UserDto updatedUser = userService.UpdateUser(userDto, userId);
         return new ResponseEntity<>(updatedUser, HttpStatus.OK);
@@ -34,6 +41,7 @@ public class UserController {
 
     // delete
     @DeleteMapping("/delete/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse> deleteUser(@PathVariable String userId) {
         userService.DeleteUser(userId);
         ApiResponse successfullyDeleted = ApiResponse.builder()
@@ -46,6 +54,7 @@ public class UserController {
 
     //get all
     @GetMapping("/getAll")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PageableResponse<UserDto>> getUser(
             @RequestParam(value = "pageNumber", defaultValue = "0", required = false) int pageNumber,
             @RequestParam(value = "pageSize", defaultValue = "10", required = false) int pageSize,
@@ -58,6 +67,7 @@ public class UserController {
 
     //get single
     @GetMapping("/getSingle/{userId}")
+    @PreAuthorize("@securityGuard.isCurrentUserId(#userId)")
     public ResponseEntity<UserDto> getUser(@PathVariable String userId) {
         UserDto singleUser = userService.getSingleUser(userId);
         return new ResponseEntity<>(singleUser, HttpStatus.OK);
@@ -65,6 +75,7 @@ public class UserController {
 
     //get by email
     @GetMapping("/getEmail/{emailId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDto> getEmailUser(@PathVariable String emailId) {
         UserDto userByEmail = userService.getUserByEmail(emailId);
         return new ResponseEntity<>(userByEmail, HttpStatus.OK);
@@ -72,6 +83,7 @@ public class UserController {
 
     //search user by keyword
     @GetMapping("/search/{keyword}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserDto>> SearchUser(@PathVariable String keyword) {
         List<UserDto> searchUser = userService.searchUser(keyword);
         return new ResponseEntity<>(searchUser, HttpStatus.OK);

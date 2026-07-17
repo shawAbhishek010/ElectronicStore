@@ -1,5 +1,9 @@
 package com.lcwd.electronicStore.ElectronicStore.entities;
 
+/*
+Purpose:
+Stores a user's product view history for recently viewed recommendations.
+*/
 import jakarta.persistence.*;
 import lombok.*;
 
