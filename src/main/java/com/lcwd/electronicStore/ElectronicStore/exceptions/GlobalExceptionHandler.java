@@ -10,6 +10,7 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -79,6 +80,18 @@ public class GlobalExceptionHandler {
                 .build();
 
         return new ResponseEntity<>(apiResponse, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ApiResponse> responseStatusExceptionHandler(ResponseStatusException ex) {
+        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+        ApiResponse apiResponse = ApiResponse.builder()
+                .message(ex.getReason() == null ? "Request failed" : ex.getReason())
+                .status(status)
+                .successs(false)
+                .build();
+
+        return new ResponseEntity<>(apiResponse, status);
     }
 
 }

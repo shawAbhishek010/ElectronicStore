@@ -24,6 +24,7 @@ import {
   FiPlus,
   FiSave,
   FiSearch,
+  FiSend,
   FiShield,
   FiShoppingCart,
   FiTruck,
@@ -45,6 +46,8 @@ import {
 import { getRecentlyViewed, trackProductView } from '../services/productViewService.js'
 import { getUserProfile, updateUserProfile } from '../services/userService.js'
 import { addWishlistProduct, getWishlist, removeWishlistProduct } from '../services/wishlistService.js'
+import { askAssistant } from '../services/assistantService.js'
+import { buildAssistantFallbackAnswer, buildAssistantProductContext } from '../utils/assistantRecommendations.js'
 import { getDiscountedProducts } from '../utils/discountedProducts.js'
 import { getDiscountPercent, getProductPrice } from '../utils/productPricing.js'
 import { getRecommendedProducts } from '../utils/recommendedProducts.js'
@@ -235,11 +238,25 @@ const enterpriseHighlights = [
   { icon: FiHelpCircle, label: 'Help center' },
 ]
 
+const assistantQuickPrompts = [
+  'Best phone under 30000',
+  'Laptop for office work',
+  'Good audio deals',
+]
+
+const assistantIntroMessage = {
+  role: 'assistant',
+  text: 'Tell me your budget, use, or preferred category and I will help narrow the catalog.',
+}
+
+const assistantAvatarUrl = '/images/assistant-avatar.png'
+
 function MainStorePage() {
   const { user, logout, updateStoredUser } = useAuth()
   const navigate = useNavigate()
   const productSectionRef = useRef(null)
   const trackedViews = useRef(new Set())
+  const assistantScrollRef = useRef(null)
 
   const [categories, setCategories] = useState([])
   const [products, setProducts] = useState([])
@@ -274,6 +291,10 @@ function MainStorePage() {
   const [profileStatus, setProfileStatus] = useState({ type: '', message: '' })
   const [profileLoading, setProfileLoading] = useState(false)
   const [activeHero, setActiveHero] = useState(0)
+  const [assistantOpen, setAssistantOpen] = useState(false)
+  const [assistantInput, setAssistantInput] = useState('')
+  const [assistantLoading, setAssistantLoading] = useState(false)
+  const [assistantMessages, setAssistantMessages] = useState([assistantIntroMessage])
 
   const refreshStore = useCallback(async () => {
     if (!user?.userId) return
@@ -349,6 +370,14 @@ function MainStorePage() {
       ignoreResult = true
     }
   }, [activePanel, user?.userId])
+
+  useEffect(() => {
+    if (!assistantOpen) return
+    assistantScrollRef.current?.scrollTo({
+      top: assistantScrollRef.current.scrollHeight,
+      behavior: 'smooth',
+    })
+  }, [assistantMessages, assistantLoading, assistantOpen])
 
   const cartItems = useMemo(() => cart.items || [], [cart.items])
   const wishlistIds = useMemo(() => new Set(wishlist.map((product) => product.productId)), [wishlist])
@@ -667,6 +696,53 @@ function MainStorePage() {
   const handleLogout = () => {
     logout()
     navigate('/auth')
+  }
+
+  const submitAssistantQuestion = async (event, quickQuestion = '') => {
+    event?.preventDefault()
+    const question = (quickQuestion || assistantInput).trim()
+    if (!question || assistantLoading) return
+
+    const productContext = buildAssistantProductContext({
+      products,
+      question,
+      recommendedProducts,
+      discountedProducts,
+      recentlyViewed,
+      wishlist,
+      cartItems,
+    })
+    const fallbackAnswer = buildAssistantFallbackAnswer(question, productContext)
+
+    setAssistantInput('')
+    setAssistantOpen(true)
+    setAssistantMessages((current) => [...current, { role: 'user', text: question }])
+    setAssistantLoading(true)
+
+    try {
+      const assistantResponse = await askAssistant({ question, products: productContext })
+      setAssistantMessages((current) => [
+        ...current,
+        {
+          role: 'assistant',
+          text: assistantResponse.answer || fallbackAnswer,
+          model: assistantResponse.model,
+          provider: assistantResponse.provider,
+        },
+      ])
+    } catch {
+      setAssistantMessages((current) => [
+        ...current,
+        {
+          role: 'assistant',
+          text: `${fallbackAnswer} AI assistant is offline, so I used the local catalog.`,
+          model: 'Local catalog',
+          provider: 'SparkGadget',
+        },
+      ])
+    } finally {
+      setAssistantLoading(false)
+    }
   }
 
   const selectedCategoryTitle =
@@ -1036,6 +1112,102 @@ function MainStorePage() {
           </div>
         </div>
       </footer>
+
+      <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6">
+        <AnimatePresence>
+          {assistantOpen && (
+            <motion.section
+              initial={{ opacity: 0, y: 18, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.96 }}
+              transition={{ duration: 0.18 }}
+              className="w-[min(calc(100vw-2rem),390px)] overflow-hidden rounded-lg border border-white/10 bg-slate-900 shadow-2xl shadow-slate-950/60"
+            >
+              <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <span className="grid h-9 w-9 place-items-center rounded-lg bg-cyan-400/10 text-cyan-200">
+                    <img className="h-8 w-8 rounded-lg object-cover" src={assistantAvatarUrl} alt="" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-black text-white">Spark Assistant</p>
+                    <p className="text-xs font-semibold text-slate-400">Product picker</p>
+                  </div>
+                </div>
+                <button type="button" onClick={() => setAssistantOpen(false)} className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 text-slate-300" aria-label="Close assistant">
+                  <FiX />
+                </button>
+              </div>
+
+              <div ref={assistantScrollRef} className="soft-scrollbar flex max-h-[360px] flex-col gap-3 overflow-y-auto px-4 py-4">
+                {assistantMessages.map((message, index) => (
+                  <div
+                    key={`${message.role}-${index}-${message.text}`}
+                    className={`max-w-[86%] rounded-lg px-3 py-2 text-sm leading-5 ${
+                      message.role === 'user'
+                        ? 'ml-auto bg-cyan-400 text-slate-950 font-bold'
+                        : 'mr-auto border border-white/10 bg-white/[0.05] text-slate-100'
+                    }`}
+                  >
+                    {message.text}
+                    {message.role === 'assistant' && message.model && (
+                      <span className="mt-1 block text-[11px] font-black uppercase text-slate-500">
+                        {message.provider ? `${message.provider} - ` : ''}{message.model}
+                      </span>
+                    )}
+                  </div>
+                ))}
+                {assistantLoading && (
+                  <div className="mr-auto rounded-lg border border-white/10 bg-white/[0.05] px-3 py-2 text-sm font-semibold text-slate-300">
+                    Thinking through the catalog...
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-white/10 p-3">
+                <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+                  {assistantQuickPrompts.map((prompt) => (
+                    <button
+                      key={prompt}
+                      type="button"
+                      onClick={(event) => submitAssistantQuestion(event, prompt)}
+                      disabled={assistantLoading}
+                      className="shrink-0 rounded-lg border border-cyan-300/20 bg-cyan-400/10 px-3 py-2 text-xs font-black text-cyan-100 disabled:opacity-50"
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+                <form onSubmit={submitAssistantQuestion} className="grid grid-cols-[1fr_auto] gap-2">
+                  <input
+                    value={assistantInput}
+                    onChange={(event) => setAssistantInput(event.target.value)}
+                    maxLength={500}
+                    placeholder="Ask what to buy..."
+                    className="h-11 min-w-0 rounded-lg border border-white/10 bg-slate-950/80 px-3 text-sm font-semibold text-white outline-none placeholder:text-slate-500 focus:border-cyan-300"
+                  />
+                  <button
+                    type="submit"
+                    disabled={assistantLoading || !assistantInput.trim()}
+                    className="grid h-11 w-11 place-items-center rounded-lg bg-cyan-400 text-slate-950 disabled:opacity-50"
+                    aria-label="Send question"
+                  >
+                    <FiSend />
+                  </button>
+                </form>
+              </div>
+            </motion.section>
+          )}
+        </AnimatePresence>
+
+        <button
+          type="button"
+          onClick={() => setAssistantOpen((current) => !current)}
+          className="grid h-14 w-14 place-items-center rounded-lg border border-cyan-200/30 bg-cyan-400 text-xl text-slate-950 shadow-2xl shadow-cyan-500/20 transition hover:-translate-y-0.5"
+          aria-label="Open shopping assistant"
+        >
+          {assistantOpen ? <FiX /> : <img className="h-12 w-12 rounded-lg object-cover" src={assistantAvatarUrl} alt="" />}
+        </button>
+      </div>
 
       {checkoutOpen && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/75 px-4 backdrop-blur">

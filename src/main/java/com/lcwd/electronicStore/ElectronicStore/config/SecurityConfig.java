@@ -74,6 +74,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/orders", "/orders/razorpay", "/orders/razorpay/verify", "/orders/razorpay/failure").hasRole("USER")
                 .requestMatchers(HttpMethod.GET, "/orders/users/**").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/orders/*/confirm-delivery").hasRole("USER")
+                .requestMatchers(HttpMethod.POST, "/assistant/**").hasRole("USER")
                 .requestMatchers("/carts/**", "/wishlist/**", "/product-views/**").hasRole("USER")
                 .anyRequest().authenticated()
         );
