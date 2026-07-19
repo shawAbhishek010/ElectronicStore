@@ -14,7 +14,7 @@ function PrimaryButton({ children, loading = false, className = '', ...buttonPro
       whileHover={{ y: -2 }}
       whileTap={{ scale: 0.98 }}
       disabled={loading || buttonProps.disabled}
-      className={`min-h-12 w-full rounded-2xl bg-gradient-to-r from-blue-600 via-sky-500 to-blue-500 px-5 py-3 text-sm font-black text-white shadow-lg shadow-blue-600/25 transition hover:shadow-xl hover:shadow-blue-600/30 disabled:cursor-not-allowed disabled:opacity-70 ${className}`}
+      className={`min-h-12 w-full rounded-lg bg-zinc-800 px-5 py-3 text-sm font-black text-white shadow-lg shadow-zinc-900/20 transition hover:bg-zinc-800 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-70 ${className}`}
       {...buttonProps}
     >
       {loading ? 'Please wait...' : children}

@@ -6,14 +6,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import {
-  FiAward,
   FiBriefcase,
   FiCheckCircle,
   FiCreditCard,
   FiGrid,
   FiHeart,
   FiHelpCircle,
-  FiLock,
   FiLogOut,
   FiMail,
   FiMapPin,
@@ -31,7 +29,6 @@ import {
   FiTrash2,
   FiUser,
   FiX,
-  FiZap,
 } from 'react-icons/fi'
 import { useAuth } from '../hooks/useAuth.js'
 import { getCategories, getProducts } from '../services/catalogService.js'
@@ -62,6 +59,7 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
 const razorpayCheckoutUrl = 'https://checkout.razorpay.com/v1/checkout.js'
 const highValueGuidancePaise = 5_000_000
 const standardUpiLimitPaise = 10_000_000
+const catalogPageSize = 8
 let razorpayScriptPromise = null
 
 const getRazorpayDisplayConfig = (amountInPaise) => {
@@ -189,7 +187,7 @@ const heroSlides = [
   {
     id: 'phones',
     title: 'SparkGadget',
-    subtitle: 'Fresh phones, laptops, audio, gaming gear, and home tech curated for fast shopping.',
+    subtitle: 'Fresh phones, laptops, audio, gaming gear, and home tech curated for faster buying.',
     eyebrow: 'New season picks',
     image:
       'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1600&q=80',
@@ -197,7 +195,7 @@ const heroSlides = [
   {
     id: 'desk',
     title: 'Upgrade your daily setup',
-    subtitle: 'Build a cleaner desk with portable power, creator laptops, keyboards, and smart accessories.',
+    subtitle: 'Build a cleaner desk with creator laptops, keyboards, portable power, and smart accessories.',
     eyebrow: 'Work smarter',
     image:
       'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1600&q=80',
@@ -205,7 +203,7 @@ const heroSlides = [
   {
     id: 'audio',
     title: 'Sound, play, and stream better',
-    subtitle: 'Discover wireless audio, consoles, displays, and home essentials without endless scrolling.',
+    subtitle: 'Find wireless audio, consoles, displays, and home essentials without endless scrolling.',
     eyebrow: 'Entertainment ready',
     image:
       'https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=1600&q=80',
@@ -270,6 +268,7 @@ function MainStorePage() {
   const [stockFilter, setStockFilter] = useState('available')
   const [sortBy, setSortBy] = useState('newest')
   const [search, setSearch] = useState('')
+  const [catalogVisibleCount, setCatalogVisibleCount] = useState(catalogPageSize)
   const [activePanel, setActivePanel] = useState(null)
   const [pageStatus, setPageStatus] = useState({ loading: true, error: '' })
   const [actionStatus, setActionStatus] = useState('')
@@ -450,6 +449,10 @@ function MainStorePage() {
     return { filteredProducts: sortedProducts, searchUnavailable: unavailable }
   }, [priceRange, products, search, selectedCategory, selectedCategoryKey, sortBy, stockFilter])
 
+  useEffect(() => {
+    setCatalogVisibleCount(catalogPageSize)
+  }, [priceRange, search, selectedCategory, sortBy, stockFilter])
+
   const discountedProducts = useMemo(() => getDiscountedProducts(products, 12), [products])
 
   const recommendedProducts = useMemo(
@@ -613,7 +616,7 @@ function MainStorePage() {
           localOrderId: payment.order.orderId,
         },
         theme: {
-          color: '#0891b2',
+          color: '#3f3f46',
         },
         ...(checkoutDisplay ? { config: { display: checkoutDisplay } } : {}),
         handler: async (response) => {
@@ -751,27 +754,29 @@ function MainStorePage() {
       : uniqueCategories.find((category) => category.categoryId === selectedCategory)?.title ||
         categories.find((category) => normalizeCategoryTitle(category.title) === selectedCategoryKey)?.title ||
         'Selected products'
+  const visibleCatalogProducts = filteredProducts.slice(0, catalogVisibleCount)
+  const hasMoreCatalogProducts = visibleCatalogProducts.length < filteredProducts.length
 
   const hero = heroSlides[activeHero]
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/90 backdrop-blur-xl">
+    <main id="main-content" className="min-h-[100dvh] bg-[#27272a] text-zinc-100">
+      <header className="sticky top-0 z-40 border-b border-zinc-300/16 bg-[#27272a]/92 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center gap-3">
-            <span className="grid h-11 w-11 place-items-center rounded-lg bg-gradient-to-br from-blue-600 to-cyan-400 text-white">
+            <span className="grid h-11 w-11 place-items-center rounded-lg bg-zinc-200 text-zinc-950 shadow-lg shadow-black/20">
               <FiShoppingCart className="text-xl" />
             </span>
             <span className="text-left">
               <span className="block text-lg font-black text-white">SparkGadget</span>
-              <span className="hidden text-xs font-semibold uppercase text-cyan-200 sm:block">Smart tech market</span>
+              <span className="hidden text-xs font-semibold uppercase text-zinc-200 sm:block">Smart tech market</span>
             </span>
           </button>
 
-          <nav className="hidden items-center gap-6 text-sm font-bold text-slate-300 lg:flex">
-            <a href="#recommended" className="hover:text-cyan-300">Recommended</a>
-            <a href="#discounts" className="hover:text-cyan-300">Deals</a>
-            <a href="#catalog" className="hover:text-cyan-300">Catalog</a>
+          <nav className="hidden items-center gap-6 text-sm font-bold text-zinc-300 lg:flex">
+            <a href="#recommended" className="transition hover:text-white">Recommended</a>
+            <a href="#discounts" className="transition hover:text-white">Deals</a>
+            <a href="#catalog" className="transition hover:text-white">Catalog</a>
           </nav>
 
           <div className="relative flex items-center gap-2">
@@ -815,8 +820,8 @@ function MainStorePage() {
                         onRemove={() => removeFromCart(item.cartItemId)}
                       />
                     ))}
-                    <div className="rounded-lg border border-cyan-300/20 bg-blue-500/10 p-4">
-                      <div className="flex items-center justify-between text-sm font-semibold text-slate-300">
+                    <div className="rounded-lg border border-zinc-300/20 bg-zinc-800/70 p-4">
+                      <div className="flex items-center justify-between text-sm font-semibold text-zinc-300">
                         <span>Items</span>
                         <span>{cartCount}</span>
                       </div>
@@ -824,7 +829,7 @@ function MainStorePage() {
                         <span>Total</span>
                         <span>{currency.format(cartTotal)}</span>
                       </div>
-                      <button type="button" onClick={() => setCheckoutOpen(true)} className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-400 text-sm font-black text-white">
+                      <button type="button" onClick={() => setCheckoutOpen(true)} className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-zinc-200 text-sm font-black text-zinc-950 transition hover:bg-zinc-300">
                         <FiShoppingCart />
                         Checkout
                       </button>
@@ -852,39 +857,39 @@ function MainStorePage() {
 
             {activePanel === 'profile' && (
               <HeaderPanel title="Profile" onClose={() => setActivePanel(null)}>
-                <div className="mb-4 flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-3">
-                  <img className="h-12 w-12 rounded-lg border border-cyan-300/25 bg-slate-950 object-cover" src={getProfileAvatar(user)} alt="" />
+                <div className="mb-4 flex items-center gap-3 rounded-lg border border-zinc-300/16 bg-zinc-300/10 p-3">
+                  <img className="h-12 w-12 rounded-lg border border-zinc-300/20 bg-zinc-800 object-cover" src={getProfileAvatar(user)} alt="" />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-black text-white">{user?.name || 'SparkGadget User'}</p>
-                    <p className="truncate text-xs font-bold text-cyan-200">{user?.email}</p>
+                    <p className="truncate text-xs font-bold text-zinc-200">{user?.email}</p>
                   </div>
                 </div>
                 <form className="grid gap-3" onSubmit={saveProfile}>
                   {profileStatus.message && <StatusMessage type={profileStatus.type} message={profileStatus.message} />}
                   <PanelInput label="Name" value={profileForm.name} onChange={(value) => setProfileForm({ ...profileForm, name: value })} />
                   <PanelInput label="Email" type="email" value={profileForm.email} onChange={(value) => setProfileForm({ ...profileForm, email: value })} />
-                  <label className="grid gap-2 text-sm font-bold text-slate-300">
+                  <label className="grid gap-2 text-sm font-bold text-zinc-300">
                     Gender
-                    <select value={profileForm.gender} onChange={(event) => setProfileForm({ ...profileForm, gender: event.target.value })} className="h-11 rounded-lg border border-white/10 bg-slate-950/80 px-3 text-sm font-semibold text-white outline-none focus:border-cyan-300">
+                    <select value={profileForm.gender} onChange={(event) => setProfileForm({ ...profileForm, gender: event.target.value })} className="h-11 rounded-lg border border-zinc-300/16 bg-zinc-800/80 px-3 text-sm font-semibold text-white outline-none focus:border-zinc-200/50">
                       <option value="Male">Male</option>
                       <option value="Female">Female</option>
                       <option value="Other">Other</option>
                     </select>
                   </label>
-                  <label className="grid gap-2 text-sm font-bold text-slate-300">
+                  <label className="grid gap-2 text-sm font-bold text-zinc-300">
                     About
-                    <textarea value={profileForm.about} onChange={(event) => setProfileForm({ ...profileForm, about: event.target.value })} className="min-h-20 rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-cyan-300" />
+                    <textarea value={profileForm.about} onChange={(event) => setProfileForm({ ...profileForm, about: event.target.value })} className="min-h-20 rounded-lg border border-zinc-300/16 bg-zinc-800/80 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-zinc-200/50" />
                   </label>
                   <PanelInput label="New Password" type="password" value={profileForm.newPassword} onChange={(value) => setProfileForm({ ...profileForm, newPassword: value })} placeholder="Leave blank to keep current" />
-                  <button type="submit" disabled={profileLoading} className="mt-1 flex h-11 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-400 text-sm font-black text-white disabled:opacity-60">
+                  <button type="submit" disabled={profileLoading} className="mt-1 flex h-11 items-center justify-center gap-2 rounded-lg bg-zinc-200 text-sm font-black text-zinc-950 transition hover:bg-zinc-300 disabled:opacity-60">
                     <FiSave />
                     {profileLoading ? 'Saving...' : 'Save Profile'}
                   </button>
                 </form>
-                <div className="mt-5 border-t border-white/10 pt-4">
+                <div className="mt-5 border-t border-zinc-300/16 pt-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
-                    <p className="text-sm font-black uppercase text-slate-300">Order History</p>
-                    <span className="rounded-lg bg-cyan-400/10 px-2 py-1 text-xs font-black text-cyan-200">{completedOrders.length}</span>
+                    <p className="text-sm font-black uppercase text-zinc-300">Order History</p>
+                    <span className="rounded-lg bg-zinc-300/14 px-2 py-1 text-xs font-black text-zinc-200">{completedOrders.length}</span>
                   </div>
                   {completedOrders.length ? (
                     <div className="grid gap-3">
@@ -902,9 +907,9 @@ function MainStorePage() {
         </div>
       </header>
 
-      <section className="border-b border-white/10 bg-slate-950">
+      <section className="border-b border-zinc-300/16 bg-[linear-gradient(180deg,#27272a_0%,#3f3f46_100%)]">
         <div className="mx-auto grid max-w-7xl gap-5 px-4 py-6 sm:px-6 lg:grid-cols-[1.2fr_0.8fr] lg:px-8 lg:py-8">
-          <div className="relative flex min-h-[420px] overflow-hidden rounded-lg border border-white/12 bg-slate-900 shadow-2xl">
+          <div className="relative flex min-h-[420px] overflow-hidden rounded-lg border border-zinc-300/18 bg-zinc-700 shadow-2xl shadow-black/25">
             {heroSlides.map((slide, index) => (
               <img
                 key={slide.id}
@@ -913,36 +918,24 @@ function MainStorePage() {
                 alt=""
               />
             ))}
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.92)_0%,rgba(15,23,42,0.68)_48%,rgba(2,6,23,0.2)_100%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(9,9,11,0.9)_0%,rgba(24,24,27,0.68)_52%,rgba(9,9,11,0.16)_100%)]" />
             <div className="relative z-10 flex max-w-3xl flex-col justify-end p-6 sm:p-9">
-              <p className="mb-3 inline-flex w-fit rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-3 py-2 text-xs font-black uppercase text-cyan-100">{hero.eyebrow}</p>
-              <h1 className="text-4xl font-black leading-tight text-white sm:text-6xl">{hero.title}</h1>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-100 sm:text-lg">{hero.subtitle}</p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                {[
-                  { icon: FiLock, label: 'Protected session' },
-                  { icon: FiAward, label: 'Premium catalog' },
-                  { icon: FiZap, label: 'Quick checkout' },
-                ].map(({ icon: Icon, label }) => (
-                  <span key={label} className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-xs font-black uppercase text-slate-100 backdrop-blur">
-                    <Icon className="text-cyan-200" />
-                    {label}
-                  </span>
-                ))}
-              </div>
+              <p className="mb-3 inline-flex w-fit rounded-lg border border-zinc-200/30 bg-white/10 px-3 py-2 text-xs font-black uppercase text-white">{hero.eyebrow}</p>
+              <h1 className="text-balance text-4xl font-black leading-[1.02] text-white sm:text-6xl">{hero.title}</h1>
+              <p className="text-pretty mt-4 max-w-2xl text-base leading-7 text-zinc-100 sm:text-lg">{hero.subtitle}</p>
               <div className="mt-5 flex gap-2">
                 {heroSlides.map((slide, index) => (
                   <button
                     key={slide.id}
                     type="button"
                     onClick={() => setActiveHero(index)}
-                    className={`h-2.5 rounded-full transition-all ${index === activeHero ? 'w-9 bg-cyan-300' : 'w-2.5 bg-white/45 hover:bg-white/70'}`}
+                    className={`h-2.5 rounded-full transition-all ${index === activeHero ? 'w-9 bg-white' : 'w-2.5 bg-white/45 hover:bg-white/70'}`}
                     aria-label={`Show ${slide.title}`}
                   />
                 ))}
               </div>
               <div className="mt-7 flex flex-wrap gap-3">
-                <button type="button" onClick={() => document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' })} className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-400 px-5 py-3 text-sm font-black text-white shadow-lg shadow-cyan-500/20">
+                <button type="button" onClick={() => document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' })} className="inline-flex items-center gap-2 rounded-lg bg-zinc-200 px-5 py-3 text-sm font-black text-zinc-950 shadow-lg shadow-black/20 transition hover:bg-zinc-300">
                   <FiGrid />
                   Browse catalog
                 </button>
@@ -950,9 +943,9 @@ function MainStorePage() {
             </div>
           </div>
           <aside className="soft-scrollbar flex gap-4 overflow-x-auto pb-2 lg:grid lg:grid-cols-1 lg:overflow-visible lg:pb-0">
-            <Metric icon={FiGrid} label="Categories" value={`${uniqueCategories.length} types`} helper="Curated buying lanes" accent="from-cyan-400/18 to-blue-600/10" image="https://images.unsplash.com/photo-1516321318423-f06f85e504b3" />
-            <Metric icon={FiShoppingCart} label="Products" value={`${products.length} live`} helper="Ready for checkout" accent="from-blue-500/18 to-emerald-500/10" image="https://images.unsplash.com/photo-1498049794561-7780e7231661" />
-            <Metric icon={FiPercent} label="Discounts" value={`${discountedProducts.length} active`} helper="Live deal signals" accent="from-amber-400/18 to-cyan-500/10" image="https://images.unsplash.com/photo-1607082349566-187342175e2f" />
+            <Metric icon={FiGrid} label="Categories" value={`${uniqueCategories.length} types`} helper="Curated buying lanes" accent="from-zinc-200/22 to-zinc-900/10" image="https://images.unsplash.com/photo-1516321318423-f06f85e504b3" />
+            <Metric icon={FiShoppingCart} label="Products" value={`${products.length} live`} helper="Ready for checkout" accent="from-zinc-200/22 to-zinc-500/14" image="https://images.unsplash.com/photo-1498049794561-7780e7231661" />
+            <Metric icon={FiPercent} label="Discounts" value={`${discountedProducts.length} active`} helper="Live deal signals" accent="from-zinc-200/22 to-zinc-500/14" image="https://images.unsplash.com/photo-1607082349566-187342175e2f" />
           </aside>
         </div>
       </section>
@@ -961,15 +954,25 @@ function MainStorePage() {
       {actionStatus && <InlineAlert message={actionStatus} />}
 
       <StoreSection id="recommended" title="Recommended Products" icon={FiPackage}>
-        <HorizontalProducts products={recommendedProducts} wishlistIds={wishlistIds} onAddToCart={addToCart} onToggleWishlist={toggleWishlist} onView={trackView} />
+        {pageStatus.loading ? (
+          <ProductSkeletonRail />
+        ) : (
+          <HorizontalProducts products={recommendedProducts} wishlistIds={wishlistIds} onAddToCart={addToCart} onToggleWishlist={toggleWishlist} onView={trackView} />
+        )}
       </StoreSection>
 
       <StoreSection id="discounts" title="Discounted Items" icon={FiPercent}>
-        <HorizontalProducts products={discountedProducts} wishlistIds={wishlistIds} onAddToCart={addToCart} onToggleWishlist={toggleWishlist} onView={trackView} />
+        {pageStatus.loading ? (
+          <ProductSkeletonRail />
+        ) : (
+          <HorizontalProducts products={discountedProducts} wishlistIds={wishlistIds} onAddToCart={addToCart} onToggleWishlist={toggleWishlist} onView={trackView} />
+        )}
       </StoreSection>
 
       <StoreSection id="catalog" title="Product Categories & Catalog" icon={FiGrid} sectionRef={productSectionRef}>
-        {uniqueCategories.length ? (
+        {pageStatus.loading ? (
+          <CategorySkeletonRail />
+        ) : uniqueCategories.length ? (
           <div className="soft-scrollbar mb-5 flex gap-4 overflow-x-auto pb-3">
             <CategoryCard
               title="All products"
@@ -994,22 +997,24 @@ function MainStorePage() {
             ))}
           </div>
         ) : (
-          <EmptyState text={pageStatus.loading ? 'Loading categories...' : 'No categories found yet.'} />
+          <EmptyState text="No categories found yet." />
         )}
 
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
             <p className="text-xl font-black text-white">{selectedCategoryTitle}</p>
-            <p className="mt-1 text-sm font-semibold text-slate-400">
-              {filteredProducts.length} {searchUnavailable ? 'products available to browse' : 'matching products'}
+            <p className="mt-1 text-sm font-semibold text-zinc-400">
+              {filteredProducts.length
+                ? `Showing ${visibleCatalogProducts.length} of ${filteredProducts.length} ${searchUnavailable ? 'products available to browse' : 'matching products'}`
+                : `0 ${searchUnavailable ? 'products available to browse' : 'matching products'}`}
             </p>
           </div>
         </div>
 
-        <div className="mb-5 grid gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-4 md:grid-cols-[1.3fr_repeat(4,1fr)]">
+        <div className="mb-5 grid gap-3 rounded-lg border border-zinc-300/16 bg-zinc-700/76 p-4 shadow-xl shadow-black/10 md:grid-cols-[1.3fr_repeat(4,1fr)]">
           <label className="relative block">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input value={search} onChange={(event) => setSearch(event.target.value)} className="h-11 w-full rounded-lg border border-white/10 bg-slate-950/60 pl-10 pr-3 text-sm font-semibold text-white outline-none placeholder:text-slate-500 focus:border-cyan-300" placeholder="Search products by title" />
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+            <input value={search} onChange={(event) => setSearch(event.target.value)} className="h-11 w-full rounded-lg border border-zinc-300/16 bg-zinc-800/80 pl-10 pr-3 text-sm font-semibold text-white outline-none placeholder:text-zinc-500 focus:border-zinc-200/50" placeholder="Search products by title" />
           </label>
           <Select value={selectedCategory} onChange={setSelectedCategory}>
             <option value="all">All categories</option>
@@ -1035,38 +1040,49 @@ function MainStorePage() {
         </div>
 
         {searchUnavailable && (
-          <div className="mb-5 rounded-lg border border-amber-300/25 bg-amber-400/10 px-4 py-3 text-sm font-bold text-amber-100">
+          <div className="mb-5 rounded-lg border border-zinc-200/30 bg-zinc-300/18 px-4 py-3 text-sm font-bold text-white">
             This product is not available right now. Showing other available products instead.
           </div>
         )}
 
-        {filteredProducts.length ? (
-          <HorizontalProducts layout="grid" products={filteredProducts} wishlistIds={wishlistIds} onAddToCart={addToCart} onToggleWishlist={toggleWishlist} onView={trackView} />
+        {pageStatus.loading ? (
+          <ProductSkeletonGrid />
+        ) : filteredProducts.length ? (
+          <div className="grid gap-6">
+            <HorizontalProducts layout="grid" products={visibleCatalogProducts} wishlistIds={wishlistIds} onAddToCart={addToCart} onToggleWishlist={toggleWishlist} onView={trackView} />
+            {hasMoreCatalogProducts && (
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCatalogVisibleCount((current) => Math.min(current + catalogPageSize, filteredProducts.length))
+                  }
+                  className="inline-flex h-11 items-center justify-center rounded-lg border border-zinc-300/20 bg-zinc-300/14 px-5 text-sm font-black text-zinc-100 transition hover:border-zinc-200/35 hover:bg-zinc-300/20"
+                >
+                  Show more
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
-          <EmptyState
-            text={
-              pageStatus.loading
-                ? 'Loading products from backend...'
-                : 'No products matched these filters.'
-            }
-          />
+          <EmptyState text="No products matched these filters." />
         )}
       </StoreSection>
 
-      <footer className="border-t border-white/10 bg-[#111827] px-4 pt-12 text-slate-200 sm:px-6 lg:px-8">
+      <footer className="border-t border-zinc-300/16 bg-[#3f3f46] px-4 pt-12 text-zinc-200 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
               <div className="flex items-center gap-3">
-                <span className="grid h-12 w-12 place-items-center rounded-lg bg-gradient-to-br from-blue-600 to-cyan-400 text-white">
+                <span className="grid h-12 w-12 place-items-center rounded-lg bg-zinc-200 text-zinc-950">
                   <FiShoppingCart className="text-xl" />
                 </span>
                 <div>
                   <p className="text-2xl font-black text-white">SparkGadget Enterprise</p>
-                  <p className="mt-1 text-sm font-semibold text-cyan-200">Premium electronics marketplace suite</p>
+                  <p className="mt-1 text-sm font-semibold text-zinc-200">Premium electronics marketplace suite</p>
                 </div>
               </div>
-              <p className="mt-5 max-w-2xl text-sm leading-6 text-slate-400">
+              <p className="mt-5 max-w-2xl text-sm leading-6 text-zinc-400">
                 Built for fast customer shopping, managed wishlists, live product discovery, secure checkout, and scalable retail workflows across teams and buyers.
               </p>
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -1080,10 +1096,10 @@ function MainStorePage() {
             <div className="grid gap-6 sm:grid-cols-2">
               {footerColumns.map((column) => (
                 <div key={column.title}>
-                  <p className="text-xs font-black uppercase text-slate-500">{column.title}</p>
+                  <p className="text-xs font-black uppercase text-zinc-500">{column.title}</p>
                   <div className="mt-4 grid gap-2">
                     {column.links.map((link) => (
-                      <span key={link} className="text-sm font-bold text-slate-200 transition hover:text-cyan-200">{link}</span>
+                      <span key={link} className="text-sm font-bold text-zinc-200 transition hover:text-white">{link}</span>
                     ))}
                   </div>
                 </div>
@@ -1091,18 +1107,18 @@ function MainStorePage() {
             </div>
           </div>
 
-          <div className="mt-10 border-t border-white/10 py-5">
+          <div className="mt-10 border-t border-zinc-300/16 py-5">
             <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
               <div className="flex flex-wrap gap-3">
                 {enterpriseHighlights.map(({ icon: Icon, label }) => (
-                  <span key={label} className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-black uppercase text-slate-200">
-                    <Icon className="text-cyan-300" />
+                  <span key={label} className="inline-flex items-center gap-2 rounded-lg border border-zinc-300/16 bg-zinc-300/10 px-3 py-2 text-xs font-black uppercase text-zinc-200">
+                    <Icon className="text-white" />
                     {label}
                   </span>
                 ))}
               </div>
-              <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-slate-400">
-                <span>© 2026 SparkGadget.com</span>
+              <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-zinc-400">
+                <span>(c) 2026 SparkGadget.com</span>
                 <span className="hidden h-4 w-px bg-white/15 sm:block" />
                 <span>CIN: SG-2026-ENT-IND</span>
                 <span className="hidden h-4 w-px bg-white/15 sm:block" />
@@ -1121,19 +1137,19 @@ function MainStorePage() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 12, scale: 0.96 }}
               transition={{ duration: 0.18 }}
-              className="w-[min(calc(100vw-2rem),390px)] overflow-hidden rounded-lg border border-white/10 bg-slate-900 shadow-2xl shadow-slate-950/60"
+              className="w-[min(calc(100vw-2rem),390px)] overflow-hidden rounded-lg border border-zinc-300/16 bg-zinc-700 shadow-2xl shadow-zinc-900/60"
             >
-              <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
+              <div className="flex items-center justify-between gap-3 border-b border-zinc-300/16 px-4 py-3">
                 <div className="flex items-center gap-3">
-                  <span className="grid h-9 w-9 place-items-center rounded-lg bg-cyan-400/10 text-cyan-200">
+                  <span className="grid h-9 w-9 place-items-center rounded-lg bg-zinc-300/14 text-zinc-200">
                     <img className="h-8 w-8 rounded-lg object-cover" src={assistantAvatarUrl} alt="" />
                   </span>
                   <div>
                     <p className="text-sm font-black text-white">Spark Assistant</p>
-                    <p className="text-xs font-semibold text-slate-400">Product picker</p>
+                    <p className="text-xs font-semibold text-zinc-400">Product picker</p>
                   </div>
                 </div>
-                <button type="button" onClick={() => setAssistantOpen(false)} className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 text-slate-300" aria-label="Close assistant">
+                <button type="button" onClick={() => setAssistantOpen(false)} className="grid h-8 w-8 place-items-center rounded-lg border border-zinc-300/16 text-zinc-300" aria-label="Close assistant">
                   <FiX />
                 </button>
               </div>
@@ -1144,26 +1160,26 @@ function MainStorePage() {
                     key={`${message.role}-${index}-${message.text}`}
                     className={`max-w-[86%] rounded-lg px-3 py-2 text-sm leading-5 ${
                       message.role === 'user'
-                        ? 'ml-auto bg-cyan-400 text-slate-950 font-bold'
-                        : 'mr-auto border border-white/10 bg-white/[0.05] text-slate-100'
+                        ? 'ml-auto bg-zinc-200 text-zinc-950 font-bold'
+                        : 'mr-auto border border-zinc-300/16 bg-zinc-300/12 text-zinc-100'
                     }`}
                   >
                     {message.text}
                     {message.role === 'assistant' && message.model && (
-                      <span className="mt-1 block text-[11px] font-black uppercase text-slate-500">
+                      <span className="mt-1 block text-[11px] font-black uppercase text-zinc-500">
                         {message.provider ? `${message.provider} - ` : ''}{message.model}
                       </span>
                     )}
                   </div>
                 ))}
                 {assistantLoading && (
-                  <div className="mr-auto rounded-lg border border-white/10 bg-white/[0.05] px-3 py-2 text-sm font-semibold text-slate-300">
+                  <div className="mr-auto rounded-lg border border-zinc-300/16 bg-zinc-300/12 px-3 py-2 text-sm font-semibold text-zinc-300">
                     Thinking through the catalog...
                   </div>
                 )}
               </div>
 
-              <div className="border-t border-white/10 p-3">
+              <div className="border-t border-zinc-300/16 p-3">
                 <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
                   {assistantQuickPrompts.map((prompt) => (
                     <button
@@ -1171,7 +1187,7 @@ function MainStorePage() {
                       type="button"
                       onClick={(event) => submitAssistantQuestion(event, prompt)}
                       disabled={assistantLoading}
-                      className="shrink-0 rounded-lg border border-cyan-300/20 bg-cyan-400/10 px-3 py-2 text-xs font-black text-cyan-100 disabled:opacity-50"
+                      className="shrink-0 rounded-lg border border-zinc-300/20 bg-zinc-300/14 px-3 py-2 text-xs font-black text-zinc-100 disabled:opacity-50"
                     >
                       {prompt}
                     </button>
@@ -1183,12 +1199,12 @@ function MainStorePage() {
                     onChange={(event) => setAssistantInput(event.target.value)}
                     maxLength={500}
                     placeholder="Ask what to buy..."
-                    className="h-11 min-w-0 rounded-lg border border-white/10 bg-slate-950/80 px-3 text-sm font-semibold text-white outline-none placeholder:text-slate-500 focus:border-cyan-300"
+                    className="h-11 min-w-0 rounded-lg border border-zinc-300/16 bg-zinc-800/80 px-3 text-sm font-semibold text-white outline-none placeholder:text-zinc-500 focus:border-zinc-200/50"
                   />
                   <button
                     type="submit"
                     disabled={assistantLoading || !assistantInput.trim()}
-                    className="grid h-11 w-11 place-items-center rounded-lg bg-cyan-400 text-slate-950 disabled:opacity-50"
+                    className="grid h-11 w-11 place-items-center rounded-lg bg-zinc-200 text-zinc-950 transition hover:bg-zinc-300 disabled:opacity-50"
                     aria-label="Send question"
                   >
                     <FiSend />
@@ -1202,7 +1218,7 @@ function MainStorePage() {
         <button
           type="button"
           onClick={() => setAssistantOpen((current) => !current)}
-          className="grid h-14 w-14 place-items-center rounded-lg border border-cyan-200/30 bg-cyan-400 text-xl text-slate-950 shadow-2xl shadow-cyan-500/20 transition hover:-translate-y-0.5"
+          className="grid h-14 w-14 place-items-center rounded-lg border border-zinc-200/30 bg-zinc-200 text-xl text-zinc-950 shadow-2xl shadow-black/20 transition hover:-translate-y-0.5 hover:bg-zinc-300"
           aria-label="Open shopping assistant"
         >
           {assistantOpen ? <FiX /> : <img className="h-12 w-12 rounded-lg object-cover" src={assistantAvatarUrl} alt="" />}
@@ -1210,35 +1226,35 @@ function MainStorePage() {
       </div>
 
       {checkoutOpen && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/75 px-4 backdrop-blur">
-          <form onSubmit={placeOrder} className="w-full max-w-lg rounded-lg border border-white/10 bg-slate-900 p-5 shadow-2xl">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-zinc-800/75 px-4 backdrop-blur">
+          <form onSubmit={placeOrder} className="w-full max-w-lg rounded-lg border border-zinc-300/16 bg-zinc-700 p-5 shadow-2xl">
             <div className="mb-4 flex items-center justify-between gap-3">
               <h2 className="text-xl font-black text-white">Checkout</h2>
-              <button type="button" onClick={closeCheckout} className="grid h-9 w-9 place-items-center rounded-lg border border-white/10 text-slate-200"><FiX /></button>
+              <button type="button" onClick={closeCheckout} className="grid h-9 w-9 place-items-center rounded-lg border border-zinc-300/16 text-zinc-200"><FiX /></button>
             </div>
             <div className="grid gap-3">
               <PanelInput label="Billing Name" value={checkoutForm.billingName} onChange={(value) => setCheckoutForm({ ...checkoutForm, billingName: value })} required />
               <PanelInput label="Billing Phone" value={checkoutForm.billingPhone} onChange={(value) => setCheckoutForm({ ...checkoutForm, billingPhone: value })} required />
-              <label className="grid gap-2 text-sm font-bold text-slate-300">
+              <label className="grid gap-2 text-sm font-bold text-zinc-300">
                 Billing Address
-                <textarea required value={checkoutForm.billingAddress} onChange={(event) => setCheckoutForm({ ...checkoutForm, billingAddress: event.target.value })} className="min-h-24 rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-cyan-300" />
+                <textarea required value={checkoutForm.billingAddress} onChange={(event) => setCheckoutForm({ ...checkoutForm, billingAddress: event.target.value })} className="min-h-24 rounded-lg border border-zinc-300/16 bg-zinc-800/80 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-zinc-200/50" />
               </label>
-              <div className="rounded-lg border border-cyan-300/20 bg-cyan-400/10 p-3 text-sm font-bold text-cyan-100">
+              <div className="rounded-lg border border-zinc-300/20 bg-zinc-300/14 p-3 text-sm font-bold text-zinc-100">
                 Total: {currency.format(cartTotal)}
               </div>
               {cartTotal > 50_000 && (
-                <div className="rounded-lg border border-amber-300/25 bg-amber-300/10 px-3 py-2 text-sm font-bold text-amber-100">
+                <div className="rounded-lg border border-zinc-200/30 bg-zinc-300/18 px-3 py-2 text-sm font-bold text-white">
                   {cartTotal > 100_000
-                    ? 'Use Card or Netbanking for this amount. Standard UPI supports up to ₹1,00,000.'
+                    ? 'Use Card or Netbanking for this amount. Standard UPI supports up to INR 1,00,000.'
                     : 'Card and Netbanking are prioritized for this amount. Razorpay account and bank limits still apply.'}
                 </div>
               )}
               {actionStatus && (
-                <div role="alert" className="rounded-lg border border-rose-400/30 bg-rose-400/10 px-3 py-2 text-sm font-bold text-rose-100">
+                <div role="alert" className="rounded-lg border border-zinc-300/20 bg-zinc-300/14 px-3 py-2 text-sm font-bold text-zinc-100">
                   {actionStatus}
                 </div>
               )}
-              <button type="submit" disabled={checkoutProcessing} className="flex h-11 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-400 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60">
+              <button type="submit" disabled={checkoutProcessing} className="flex h-11 items-center justify-center gap-2 rounded-lg bg-zinc-200 text-sm font-black text-zinc-950 transition hover:bg-zinc-300 disabled:cursor-not-allowed disabled:opacity-60">
                 <FiCreditCard />
                 {checkoutProcessing ? 'Opening Payment...' : 'Pay with Razorpay'}
               </button>
@@ -1252,11 +1268,11 @@ function MainStorePage() {
 
 function HeaderButton({ active, onClick, label, icon: Icon, avatar }) {
   return (
-    <button type="button" onClick={onClick} className={`hidden items-center gap-2 rounded-lg border px-3 py-2 text-sm font-bold transition md:flex ${active ? 'border-cyan-300 bg-cyan-400/10 text-cyan-100' : 'border-white/10 bg-white/5 text-slate-200 hover:border-cyan-300/40'}`}>
+    <button type="button" onClick={onClick} className={`hidden items-center gap-2 rounded-lg border px-3 py-2 text-sm font-bold transition md:flex ${active ? 'border-zinc-200/50 bg-zinc-300/14 text-zinc-100' : 'border-zinc-300/16 bg-zinc-300/10 text-zinc-200 hover:border-zinc-200/35 hover:bg-zinc-300/16'}`}>
       {avatar ? (
-        <img className="h-6 w-6 rounded-md border border-cyan-300/25 bg-slate-950 object-cover" src={avatar} alt="" />
+        <img className="h-6 w-6 rounded-md border border-zinc-300/20 bg-zinc-800 object-cover" src={avatar} alt="" />
       ) : (
-        <Icon className="text-cyan-300" />
+        <Icon className="text-zinc-300" />
       )}
       {label}
     </button>
@@ -1265,7 +1281,7 @@ function HeaderButton({ active, onClick, label, icon: Icon, avatar }) {
 
 function IconButton({ active, onClick, label, icon: Icon, count }) {
   return (
-    <button type="button" onClick={onClick} className={`relative grid h-10 w-10 place-items-center rounded-lg border transition ${active ? 'border-cyan-300 bg-cyan-400/10 text-cyan-100' : 'border-white/10 bg-white/5 text-slate-200 hover:border-cyan-300/40'}`} aria-label={label}>
+    <button type="button" onClick={onClick} className={`relative grid h-10 w-10 place-items-center rounded-lg border transition ${active ? 'border-zinc-200/50 bg-zinc-300/14 text-zinc-100' : 'border-zinc-300/16 bg-zinc-300/10 text-zinc-200 hover:border-zinc-200/35 hover:bg-zinc-300/16'}`} aria-label={label}>
       <Icon />
       {count > 0 && <CountBadge count={count} />}
     </button>
@@ -1273,15 +1289,15 @@ function IconButton({ active, onClick, label, icon: Icon, count }) {
 }
 
 function CountBadge({ count }) {
-  return <span className="absolute -right-2 -top-2 grid min-h-5 min-w-5 place-items-center rounded-full bg-cyan-400 px-1 text-[11px] font-black text-slate-950">{count}</span>
+  return <span className="absolute -right-2 -top-2 grid min-h-5 min-w-5 place-items-center rounded-full bg-zinc-200 px-1 text-[11px] font-black text-zinc-950">{count}</span>
 }
 
 function HeaderPanel({ title, children, onClose }) {
   return (
-    <div className="absolute right-0 top-12 z-50 flex max-h-[calc(100vh-6.5rem)] w-[min(92vw,520px)] flex-col rounded-lg border border-white/10 bg-slate-900 p-4 shadow-2xl shadow-slate-950/50">
+    <div className="absolute right-0 top-12 z-50 flex max-h-[calc(100vh-6.5rem)] w-[min(92vw,520px)] flex-col rounded-lg border border-zinc-300/16 bg-zinc-700/98 p-4 shadow-2xl shadow-zinc-900/50">
       <div className="mb-4 flex shrink-0 items-center justify-between">
         <h3 className="text-lg font-black text-white">{title}</h3>
-        <button type="button" onClick={onClose} className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 text-slate-300"><FiX /></button>
+        <button type="button" onClick={onClose} className="grid h-8 w-8 place-items-center rounded-lg border border-zinc-300/16 text-zinc-300"><FiX /></button>
       </div>
       <div className="soft-scrollbar min-h-0 overflow-y-auto pr-1">
         {children}
@@ -1292,16 +1308,16 @@ function HeaderPanel({ title, children, onClose }) {
 
 function OrderSummaryCard({ order, onConfirmDelivery }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3">
+    <div className="rounded-lg border border-zinc-300/16 bg-zinc-800/70 p-3">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-black text-white">{currency.format(order.orderAmount)}</p>
-        <span className="rounded-lg bg-cyan-400/10 px-2 py-1 text-xs font-black text-cyan-200">{formatOrderStatus(order.orderStatus)}</span>
+        <span className="rounded-lg bg-zinc-300/14 px-2 py-1 text-xs font-black text-zinc-200">{formatOrderStatus(order.orderStatus)}</span>
       </div>
-      <p className="mt-2 text-xs font-semibold text-slate-400">{order.billingName} - {order.billingPhone}</p>
-      <p className="mt-1 text-xs font-bold text-cyan-200">Payment: {order.paymentStatus || 'PENDING'}</p>
-      <p className="mt-1 text-xs font-semibold text-slate-500">{order.orderItems?.length || 0} products</p>
+      <p className="mt-2 text-xs font-semibold text-zinc-400">{order.billingName} - {order.billingPhone}</p>
+      <p className="mt-1 text-xs font-bold text-zinc-200">Payment: {order.paymentStatus || 'PENDING'}</p>
+      <p className="mt-1 text-xs font-semibold text-zinc-500">{order.orderItems?.length || 0} products</p>
       {order.orderStatus === 'DELIVERED' && onConfirmDelivery && (
-        <button type="button" onClick={() => onConfirmDelivery(order.orderId)} className="mt-3 flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-emerald-500 text-xs font-black text-white">
+        <button type="button" onClick={() => onConfirmDelivery(order.orderId)} className="mt-3 flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-zinc-500 text-xs font-black text-white">
           <FiCheckCircle />
           Confirm Delivery
         </button>
@@ -1312,10 +1328,10 @@ function OrderSummaryCard({ order, onConfirmDelivery }) {
 
 function StoreSection({ id, title, icon: Icon, children, sectionRef }) {
   return (
-    <section ref={sectionRef} id={id} className="scroll-mt-24 border-t border-white/10 px-4 py-10 sm:px-6 lg:px-8">
+    <section ref={sectionRef} id={id} className="scroll-mt-24 border-t border-zinc-300/16 px-4 py-11 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-lg border border-cyan-300/20 bg-blue-500/10 text-cyan-200"><Icon className="text-xl" /></span>
+          <span className="grid h-11 w-11 place-items-center rounded-lg border border-zinc-300/16 bg-zinc-300/14 text-white"><Icon className="text-xl" /></span>
           <h2 className="text-2xl font-black text-white sm:text-3xl">{title}</h2>
         </div>
         {children}
@@ -1329,7 +1345,7 @@ function CategoryCard({ title, description, image, count, active, icon: Icon, on
     <button
       type="button"
       onClick={onClick}
-      className={`group relative min-h-[260px] w-[285px] shrink-0 overflow-hidden rounded-lg border text-left shadow-xl transition hover:-translate-y-1 ${active ? 'border-cyan-300 bg-blue-500/18' : 'border-white/10 bg-white/[0.04] hover:border-cyan-300/40'}`}
+      className={`group relative min-h-[260px] w-[285px] shrink-0 overflow-hidden rounded-lg border text-left shadow-xl shadow-black/15 transition hover:-translate-y-1 ${active ? 'border-zinc-200/70 bg-white/10' : 'border-zinc-300/16 bg-zinc-300/10 hover:border-zinc-200/35'}`}
     >
       <img
         className="absolute inset-0 h-full w-full object-cover opacity-75 transition duration-500 group-hover:scale-105"
@@ -1342,14 +1358,14 @@ function CategoryCard({ title, description, image, count, active, icon: Icon, on
           }
         }}
       />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.12)_0%,rgba(2,6,23,0.86)_62%,rgba(2,6,23,0.98)_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,9,11,0.12)_0%,rgba(9,9,11,0.86)_62%,rgba(9,9,11,0.98)_100%)]" />
       <div className="relative z-10 flex min-h-[260px] flex-col justify-end p-5">
-        <span className="mb-auto grid h-12 w-12 place-items-center rounded-lg border border-cyan-200/20 bg-slate-950/55 text-cyan-100 backdrop-blur">
+        <span className="mb-auto grid h-12 w-12 place-items-center rounded-lg border border-zinc-300/20 bg-zinc-800/70 text-white backdrop-blur">
           <Icon />
         </span>
         <span className="block text-xl font-black text-white">{title}</span>
-        <span className="mt-2 line-clamp-2 min-h-10 text-sm font-semibold leading-5 text-slate-200">{description}</span>
-        <span className="mt-4 inline-flex w-fit rounded-lg bg-cyan-300 px-3 py-1 text-xs font-black uppercase text-slate-950">
+        <span className="mt-2 line-clamp-2 min-h-10 text-sm font-semibold leading-5 text-zinc-200">{description}</span>
+        <span className="mt-4 inline-flex w-fit rounded-lg bg-zinc-200 px-3 py-1 text-xs font-black uppercase text-zinc-950">
           {count} {count === 1 ? 'item' : 'items'}
         </span>
       </div>
@@ -1359,14 +1375,14 @@ function CategoryCard({ title, description, image, count, active, icon: Icon, on
 
 function FooterContact({ icon: Icon, label, value }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+    <div className="rounded-lg border border-zinc-300/16 bg-zinc-300/10 p-4">
       <div className="flex items-start gap-3">
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-cyan-400/10 text-cyan-200">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-zinc-300/14 text-zinc-200">
           <Icon />
         </span>
         <span>
-          <span className="block text-xs font-black uppercase text-slate-500">{label}</span>
-          <span className="mt-1 block text-sm font-bold leading-5 text-slate-200">{value}</span>
+          <span className="block text-xs font-black uppercase text-zinc-500">{label}</span>
+          <span className="mt-1 block text-sm font-bold leading-5 text-zinc-200">{value}</span>
         </span>
       </div>
     </div>
@@ -1375,20 +1391,20 @@ function FooterContact({ icon: Icon, label, value }) {
 
 function Metric({ icon: Icon, label, value, helper, accent, image }) {
   return (
-    <div className="relative min-w-[240px] overflow-hidden rounded-lg border border-white/10 bg-slate-900 p-5 shadow-xl">
+    <div className="relative min-w-[240px] overflow-hidden rounded-lg border border-zinc-300/16 bg-zinc-700 p-5 shadow-xl shadow-black/15">
       <img
         src={withImageParams(image, 700)}
         alt=""
         aria-hidden="true"
         className="absolute inset-0 h-full w-full object-cover opacity-[0.48] saturate-[0.7] contrast-125"
       />
-      <div className={`absolute inset-0 bg-gradient-to-br ${accent || 'from-cyan-400/12 to-blue-600/8'}`} />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.9)_0%,rgba(2,6,23,0.74)_58%,rgba(2,6,23,0.62)_100%)]" />
+      <div className={`absolute inset-0 bg-gradient-to-br ${accent || 'from-zinc-200/18 to-zinc-900/8'}`} />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(9,9,11,0.9)_0%,rgba(9,9,11,0.74)_58%,rgba(9,9,11,0.62)_100%)]" />
       <div className="relative">
-        <span className="grid h-14 w-14 place-items-center rounded-lg border border-cyan-200/10 bg-slate-950/45 text-cyan-200 shadow-lg shadow-cyan-950/20"><Icon className="text-2xl" /></span>
-        <p className="mt-7 text-sm font-bold uppercase text-slate-400">{label}</p>
+        <span className="grid h-14 w-14 place-items-center rounded-lg border border-zinc-300/16 bg-zinc-800/70 text-white shadow-lg shadow-zinc-900/20"><Icon className="text-2xl" /></span>
+        <p className="mt-7 text-sm font-bold uppercase text-zinc-400">{label}</p>
         <p className="mt-2 text-3xl font-black text-white">{value}</p>
-        <p className="mt-3 flex items-center gap-2 text-xs font-bold uppercase text-cyan-100">
+        <p className="mt-3 flex items-center gap-2 text-xs font-bold uppercase text-zinc-100">
           <FiCheckCircle />
           {helper}
         </p>
@@ -1399,7 +1415,7 @@ function Metric({ icon: Icon, label, value, helper, accent, image }) {
 
 function Select({ value, onChange, children }) {
   return (
-    <select value={value} onChange={(event) => onChange(event.target.value)} className="h-11 rounded-lg border border-white/10 bg-slate-950/60 px-3 text-sm font-semibold text-white outline-none focus:border-cyan-300">
+    <select value={value} onChange={(event) => onChange(event.target.value)} className="h-11 rounded-lg border border-zinc-300/16 bg-zinc-800/80 px-3 text-sm font-semibold text-white outline-none focus:border-zinc-200/50">
       {children}
     </select>
   )
@@ -1411,10 +1427,63 @@ function HorizontalProducts({ products, wishlistIds, onAddToCart, onToggleWishli
   const isGrid = layout === 'grid'
 
   return (
-    <div className={isGrid ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'soft-scrollbar flex gap-4 overflow-x-auto pb-3'}>
+    <div className={isGrid ? 'grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'soft-scrollbar flex gap-4 overflow-x-auto pb-3'}>
       {products.map((product) => (
         <div key={product.productId} className={isGrid ? 'min-w-0' : 'w-[280px] shrink-0 sm:w-[300px]'}>
           <ProductCard product={product} isLiked={wishlistIds.has(product.productId)} onAddToCart={() => onAddToCart(product.productId)} onToggleWishlist={() => onToggleWishlist(product.productId)} onView={() => onView(product.productId)} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function ProductSkeletonRail() {
+  return (
+    <div className="soft-scrollbar flex gap-4 overflow-x-auto pb-3" aria-label="Loading products">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <ProductSkeletonCard key={index} className="w-[280px] shrink-0 sm:w-[300px]" />
+      ))}
+    </div>
+  )
+}
+
+function ProductSkeletonGrid() {
+  return (
+    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-label="Loading catalog">
+      {Array.from({ length: 8 }).map((_, index) => (
+        <ProductSkeletonCard key={index} />
+      ))}
+    </div>
+  )
+}
+
+function ProductSkeletonCard({ className = '' }) {
+  return (
+    <div className={`animate-pulse overflow-hidden rounded-lg border border-zinc-300/16 bg-zinc-700/76 ${className}`}>
+      <div className="h-48 bg-zinc-800/80" />
+      <div className="space-y-3 p-4">
+        <div className="flex justify-between gap-3">
+          <div className="h-6 w-24 rounded-lg bg-zinc-800" />
+          <div className="h-6 w-16 rounded-lg bg-zinc-800" />
+        </div>
+        <div className="h-5 w-4/5 rounded-lg bg-zinc-800" />
+        <div className="h-4 w-full rounded-lg bg-zinc-800" />
+        <div className="h-4 w-2/3 rounded-lg bg-zinc-800" />
+        <div className="flex items-end justify-between pt-2">
+          <div className="h-7 w-28 rounded-lg bg-zinc-800" />
+          <div className="h-10 w-20 rounded-lg bg-zinc-700" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CategorySkeletonRail() {
+  return (
+    <div className="soft-scrollbar mb-5 flex gap-4 overflow-x-auto pb-3" aria-label="Loading categories">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div key={index} className="h-[260px] w-[285px] shrink-0 animate-pulse rounded-lg border border-zinc-300/16 bg-zinc-700/76">
+          <div className="h-full rounded-lg bg-zinc-800/70" />
         </div>
       ))}
     </div>
@@ -1444,7 +1513,7 @@ function ProductCard({ product, isLiked, onAddToCart, onToggleWishlist, onView }
   }
 
   return (
-    <article onClickCapture={onView} className={`group relative overflow-hidden rounded-lg border bg-white/[0.045] text-left shadow-xl transition hover:-translate-y-1 hover:border-cyan-300/35 ${cartPulse || wishPulse ? 'border-cyan-300 shadow-cyan-500/20' : 'border-white/10'}`}>
+    <article onClickCapture={onView} className={`group relative overflow-hidden rounded-lg border bg-zinc-700/88 text-left shadow-xl shadow-black/12 transition hover:-translate-y-1 hover:border-zinc-200/30 ${cartPulse || wishPulse ? 'border-white shadow-white/10' : 'border-zinc-300/16'}`}>
       <AnimatePresence>
         {(cartPulse || wishPulse) && (
           <motion.div
@@ -1452,14 +1521,14 @@ function ProductCard({ product, isLiked, onAddToCart, onToggleWishlist, onView }
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.96 }}
             transition={{ duration: 0.2 }}
-            className="absolute left-3 top-3 z-20 inline-flex items-center gap-2 rounded-lg border border-cyan-200/30 bg-slate-950/85 px-3 py-2 text-xs font-black uppercase text-cyan-100 shadow-xl backdrop-blur"
+            className="absolute left-3 top-3 z-20 inline-flex items-center gap-2 rounded-lg border border-zinc-200/30 bg-zinc-800/90 px-3 py-2 text-xs font-black uppercase text-white shadow-xl backdrop-blur"
           >
             {cartPulse ? <FiShoppingCart /> : <FiHeart className="fill-current" />}
             {cartPulse ? 'Added to cart' : isLiked ? 'Wishlist updated' : 'Saved'}
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="relative grid h-44 place-items-center overflow-hidden bg-slate-900">
+      <div className="relative grid h-48 place-items-center overflow-hidden bg-zinc-800">
         {imageUrl ? (
           <img
             className={`h-full w-full opacity-90 transition duration-500 group-hover:scale-105 ${
@@ -1474,15 +1543,15 @@ function ProductCard({ product, isLiked, onAddToCart, onToggleWishlist, onView }
               }
             }}
           />
-        ) : <FiPackage className="text-6xl text-cyan-200/55" />}
-        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/90 to-transparent" />
-        {discount > 0 && <span className="absolute left-3 top-3 rounded-lg bg-blue-600 px-3 py-1 text-xs font-black text-white">{discount}% OFF</span>}
+        ) : <FiPackage className="text-6xl text-zinc-200/55" />}
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-zinc-950/90 to-transparent" />
+        {discount > 0 && <span className="absolute left-3 top-3 rounded-lg bg-zinc-200 px-3 py-1 text-xs font-black text-zinc-950">{discount}% OFF</span>}
         <motion.button
           type="button"
           whileTap={{ scale: 0.82, rotate: -8 }}
           animate={wishPulse ? { scale: [1, 1.18, 1] } : { scale: 1 }}
           onClick={handleWishlist}
-          className={`absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-lg border backdrop-blur ${isLiked || wishPulse ? 'border-cyan-300 bg-cyan-400/20 text-cyan-100' : 'border-white/20 bg-slate-950/45 text-white'}`}
+          className={`absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-lg border backdrop-blur ${isLiked || wishPulse ? 'border-zinc-200/45 bg-zinc-300/18 text-zinc-100' : 'border-zinc-200/30 bg-zinc-800/70 text-white'}`}
           aria-label="Toggle wishlist"
         >
           <FiHeart className={isLiked ? 'fill-current' : ''} />
@@ -1490,16 +1559,16 @@ function ProductCard({ product, isLiked, onAddToCart, onToggleWishlist, onView }
       </div>
       <div className="p-4">
         <div className="flex items-center justify-between gap-3">
-          <span className="rounded-lg bg-slate-950/70 px-2.5 py-1 text-xs font-black text-cyan-200">{product.category?.title || 'Uncategorized'}</span>
-          <span className={`rounded-lg px-2.5 py-1 text-xs font-black ${product.stock ? 'bg-emerald-400/10 text-emerald-200' : 'bg-red-400/10 text-red-200'}`}>{product.stock ? 'In stock' : 'Out'}</span>
+          <span className="rounded-lg bg-zinc-800/80 px-2.5 py-1 text-xs font-black text-zinc-200">{product.category?.title || 'Uncategorized'}</span>
+          <span className={`rounded-lg px-2.5 py-1 text-xs font-black ${product.stock ? 'bg-zinc-300/14 text-zinc-100' : 'bg-zinc-300/14 text-zinc-200'}`}>{product.stock ? 'In stock' : 'Out'}</span>
         </div>
         <h3 className="mt-3 line-clamp-2 min-h-12 text-lg font-black leading-6 text-white">{product.title}</h3>
-        <p className="mt-2 line-clamp-2 min-h-10 text-sm leading-5 text-slate-400">{product.description}</p>
-        <p className="mt-2 text-xs font-semibold text-slate-500">{product.quantity} units ready</p>
+        <p className="mt-2 line-clamp-2 min-h-10 text-sm leading-5 text-zinc-400">{product.description}</p>
+        <p className="mt-2 text-xs font-semibold text-zinc-500">{product.quantity} units ready</p>
         <div className="mt-4 flex items-end justify-between gap-3">
           <div>
-            <p className="text-xl font-black text-cyan-100">{currency.format(getProductPrice(product))}</p>
-            {discount > 0 && <p className="text-sm font-semibold text-slate-500 line-through">{currency.format(product.price)}</p>}
+            <p className="text-xl font-black text-white">{currency.format(getProductPrice(product))}</p>
+            {discount > 0 && <p className="text-sm font-semibold text-zinc-500 line-through">{currency.format(product.price)}</p>}
           </div>
           <motion.button
             type="button"
@@ -1507,7 +1576,7 @@ function ProductCard({ product, isLiked, onAddToCart, onToggleWishlist, onView }
             animate={cartPulse ? { y: [0, -4, 0], scale: [1, 1.05, 1] } : { y: 0, scale: 1 }}
             onClick={handleAddToCart}
             disabled={!product.stock || product.quantity <= 0}
-            className="inline-flex h-10 items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-400 px-3 text-sm font-black text-white shadow-lg shadow-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-10 items-center gap-2 rounded-lg bg-zinc-200 px-3 text-sm font-black text-zinc-950 shadow-lg shadow-black/15 transition hover:bg-zinc-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <FiShoppingCart />
             {cartPulse ? 'Added' : 'Add'}
@@ -1520,17 +1589,17 @@ function ProductCard({ product, isLiked, onAddToCart, onToggleWishlist, onView }
 
 function CompactProductRow({ product, actionLabel, actionIcon: ActionIcon, onAction, onRemove }) {
   return (
-    <div className="grid grid-cols-[48px_1fr_auto] items-center gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-2">
-      <div className="grid h-12 w-12 place-items-center overflow-hidden rounded-lg bg-slate-950">
-        {getProductImage(product) ? <img className="h-full w-full object-cover" src={getProductImage(product)} alt={product.title} /> : <FiPackage className="text-cyan-200" />}
+    <div className="grid grid-cols-[48px_1fr_auto] items-center gap-3 rounded-lg border border-zinc-300/16 bg-zinc-300/10 p-2">
+      <div className="grid h-12 w-12 place-items-center overflow-hidden rounded-lg bg-zinc-800">
+        {getProductImage(product) ? <img className="h-full w-full object-cover" src={getProductImage(product)} alt={product.title} /> : <FiPackage className="text-zinc-200" />}
       </div>
       <div className="min-w-0">
         <p className="truncate text-sm font-black text-white">{product.title}</p>
-        <p className="text-xs font-semibold text-slate-400">{currency.format(getProductPrice(product))}</p>
+        <p className="text-xs font-semibold text-zinc-400">{currency.format(getProductPrice(product))}</p>
       </div>
       <div className="flex items-center gap-2">
-        <button type="button" onClick={onAction} className="grid h-9 w-9 place-items-center rounded-lg bg-cyan-400 text-slate-950" aria-label={actionLabel}><ActionIcon /></button>
-        <button type="button" onClick={onRemove} className="grid h-9 w-9 place-items-center rounded-lg border border-white/10 text-slate-300" aria-label="Remove"><FiTrash2 /></button>
+        <button type="button" onClick={onAction} className="grid h-9 w-9 place-items-center rounded-lg bg-zinc-200 text-zinc-950 transition hover:bg-zinc-300" aria-label={actionLabel}><ActionIcon /></button>
+        <button type="button" onClick={onRemove} className="grid h-9 w-9 place-items-center rounded-lg border border-zinc-300/16 text-zinc-300" aria-label="Remove"><FiTrash2 /></button>
       </div>
     </div>
   )
@@ -1538,17 +1607,17 @@ function CompactProductRow({ product, actionLabel, actionIcon: ActionIcon, onAct
 
 function CompactCartRow({ item, onDecrease, onIncrease, onRemove }) {
   return (
-    <div className="grid grid-cols-[1fr_auto] gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-3">
+    <div className="grid grid-cols-[1fr_auto] gap-3 rounded-lg border border-zinc-300/16 bg-zinc-300/10 p-3">
       <div className="min-w-0">
         <p className="truncate text-sm font-black text-white">{item.product.title}</p>
-        <p className="mt-1 text-xs font-semibold text-slate-400">{currency.format(getProductPrice(item.product))} each</p>
-        <p className="mt-1 text-xs font-bold text-cyan-200">Total {currency.format(item.totalPrice)}</p>
+        <p className="mt-1 text-xs font-semibold text-zinc-400">{currency.format(getProductPrice(item.product))} each</p>
+        <p className="mt-1 text-xs font-bold text-zinc-200">Total {currency.format(item.totalPrice)}</p>
       </div>
       <div className="flex items-center gap-2">
-        <button type="button" onClick={onDecrease} className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 text-slate-200"><FiMinus /></button>
+        <button type="button" onClick={onDecrease} className="grid h-8 w-8 place-items-center rounded-lg border border-zinc-300/16 text-zinc-200"><FiMinus /></button>
         <span className="w-7 text-center text-sm font-black text-white">{item.quantity}</span>
-        <button type="button" onClick={onIncrease} className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 text-slate-200"><FiPlus /></button>
-        <button type="button" onClick={onRemove} className="grid h-8 w-8 place-items-center rounded-lg border border-red-300/20 text-red-200"><FiTrash2 /></button>
+        <button type="button" onClick={onIncrease} className="grid h-8 w-8 place-items-center rounded-lg border border-zinc-300/16 text-zinc-200"><FiPlus /></button>
+        <button type="button" onClick={onRemove} className="grid h-8 w-8 place-items-center rounded-lg border border-zinc-300/20 text-zinc-200"><FiTrash2 /></button>
       </div>
     </div>
   )
@@ -1556,27 +1625,34 @@ function CompactCartRow({ item, onDecrease, onIncrease, onRemove }) {
 
 function PanelInput({ label, value, onChange, type = 'text', placeholder = '', required = false }) {
   return (
-    <label className="grid gap-2 text-sm font-bold text-slate-300">
+    <label className="grid gap-2 text-sm font-bold text-zinc-300">
       {label}
-      <input required={required} type={type} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="h-11 rounded-lg border border-white/10 bg-slate-950/80 px-3 text-sm font-semibold text-white outline-none placeholder:text-slate-500 focus:border-cyan-300" />
+      <input required={required} type={type} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="h-11 rounded-lg border border-zinc-300/16 bg-zinc-800/80 px-3 text-sm font-semibold text-white outline-none placeholder:text-zinc-500 focus:border-zinc-200/50" />
     </label>
   )
 }
 
 function StatusMessage({ type, message }) {
-  return <div className={`rounded-lg border px-3 py-2 text-sm font-semibold ${type === 'success' ? 'border-emerald-300/25 bg-emerald-400/10 text-emerald-200' : 'border-red-300/25 bg-red-400/10 text-red-200'}`}>{message}</div>
+  return <div className={`rounded-lg border px-3 py-2 text-sm font-semibold ${type === 'success' ? 'border-zinc-300/20 bg-zinc-300/14 text-zinc-100' : 'border-zinc-300/20 bg-zinc-300/14 text-zinc-200'}`}>{message}</div>
 }
 
 function InlineAlert({ message }) {
   return (
     <div className="px-4 pt-4 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl rounded-lg border border-cyan-300/20 bg-cyan-400/10 px-4 py-3 text-sm font-bold text-cyan-100">{message}</div>
+      <div className="mx-auto max-w-7xl rounded-lg border border-zinc-300/20 bg-zinc-300/14 px-4 py-3 text-sm font-bold text-zinc-100">{message}</div>
     </div>
   )
 }
 
 function EmptyState({ text }) {
-  return <div className="rounded-lg border border-dashed border-white/15 bg-white/[0.03] p-8 text-center text-sm font-semibold text-slate-400">{text}</div>
+  return (
+    <div className="grid place-items-center rounded-lg border border-dashed border-zinc-300/20 bg-zinc-300/8 p-8 text-center">
+      <span className="mb-3 grid h-11 w-11 place-items-center rounded-lg border border-zinc-300/16 bg-zinc-800/70 text-white">
+        <FiPackage />
+      </span>
+      <p className="max-w-sm text-sm font-semibold leading-6 text-zinc-400">{text}</p>
+    </div>
+  )
 }
 
 export default MainStorePage

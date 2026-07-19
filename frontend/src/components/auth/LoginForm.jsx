@@ -51,14 +51,14 @@ function LoginForm({ onCreateAccount }) {
   return (
     <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
       <div>
-        <p className="text-2xl font-black text-slate-950">Sign in to your account</p>
-        <p className="mt-2 text-sm leading-6 text-slate-500">
+        <p className="text-2xl font-black text-zinc-950">Sign in to your account</p>
+        <p className="mt-2 text-sm leading-6 text-zinc-500">
           Shop electronics faster with a secure session.
         </p>
       </div>
 
       {formError && (
-        <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+        <div className="rounded-lg border border-zinc-200 bg-zinc-200 px-4 py-3 text-sm font-semibold text-zinc-700">
           {formError}
         </div>
       )}
@@ -109,8 +109,8 @@ function LoginForm({ onCreateAccount }) {
       )}
 
       <div className="flex items-center justify-between gap-3 text-sm">
-        <label className="flex items-center gap-2 font-semibold text-slate-500">
-          <input className="h-4 w-4 rounded border-slate-300 text-blue-600" type="checkbox" />
+        <label className="flex items-center gap-2 font-semibold text-zinc-500">
+          <input className="h-4 w-4 rounded border-zinc-300 text-zinc-950" type="checkbox" />
           Remember me
         </label>
       </div>
@@ -119,9 +119,9 @@ function LoginForm({ onCreateAccount }) {
         Login
       </PrimaryButton>
 
-      <p className="text-center text-sm font-semibold text-slate-500">
+      <p className="text-center text-sm font-semibold text-zinc-500">
         New to SparkGadget?{' '}
-        <button type="button" onClick={onCreateAccount} className="font-black text-blue-600 hover:text-blue-700">
+        <button type="button" onClick={onCreateAccount} className="font-black text-zinc-950 hover:text-zinc-800">
           Create Account
         </button>
       </p>
@@ -132,14 +132,14 @@ function LoginForm({ onCreateAccount }) {
 function RoleSelector({ register, selectedRole }) {
   return (
     <div className="grid gap-2">
-      <p className="text-sm font-bold text-slate-700">Portal</p>
-      <div className="grid grid-cols-2 rounded-2xl bg-slate-100 p-1">
-        <label className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-black transition ${selectedRole === 'ROLE_USER' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>
+      <p className="text-sm font-bold text-zinc-700">Portal</p>
+      <div className="grid grid-cols-2 rounded-lg bg-zinc-100 p-1">
+        <label className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3 py-3 text-sm font-black transition ${selectedRole === 'ROLE_USER' ? 'bg-zinc-200 text-zinc-950 shadow-sm' : 'text-zinc-500'}`}>
           <input className="sr-only" type="radio" value="ROLE_USER" {...register('role')} />
           <FiUser />
           User
         </label>
-        <label className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-black transition ${selectedRole === 'ROLE_ADMIN' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>
+        <label className={`flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3 py-3 text-sm font-black transition ${selectedRole === 'ROLE_ADMIN' ? 'bg-zinc-200 text-zinc-950 shadow-sm' : 'text-zinc-500'}`}>
           <input className="sr-only" type="radio" value="ROLE_ADMIN" {...register('role')} />
           <FiShield />
           Admin

@@ -20,10 +20,10 @@ function AuthLandingPage({ initialMode = 'login' }) {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-slate-950 text-slate-950">
+    <main id="main-content" className="relative min-h-[100dvh] overflow-hidden bg-zinc-800 text-zinc-950">
       <AuthBackground />
 
-      <section className="relative z-10 flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
+      <section className="relative z-10 flex min-h-[100dvh] items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, scale: 0.96, y: 24 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}

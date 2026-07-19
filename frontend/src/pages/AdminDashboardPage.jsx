@@ -202,16 +202,16 @@ function AdminDashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/95 backdrop-blur-xl">
+    <main id="main-content" className="min-h-[100dvh] bg-[#27272a] text-zinc-100">
+      <header className="sticky top-0 z-40 border-b border-zinc-300/16 bg-[#27272a]/95 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
-            <span className="grid h-11 w-11 place-items-center rounded-lg bg-cyan-500 text-white">
+            <span className="grid h-11 w-11 place-items-center rounded-lg bg-zinc-200 text-zinc-950 shadow-lg shadow-black/15">
               <FiBarChart2 />
             </span>
             <div>
               <p className="text-lg font-black text-white">SparkGadget Admin</p>
-              <p className="text-xs font-bold uppercase text-cyan-200">{user?.name || 'Administrator'}</p>
+              <p className="text-xs font-bold uppercase text-zinc-200">{user?.name || 'Administrator'}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -219,12 +219,12 @@ function AdminDashboardPage() {
               type="button"
               onClick={loadDashboard}
               disabled={loading}
-              className="group inline-flex h-10 items-center gap-2 rounded-lg border border-white/10 px-3 text-sm font-black text-white transition hover:-translate-y-0.5 hover:border-cyan-300/45 hover:bg-cyan-400/10 active:translate-y-0 disabled:cursor-wait disabled:opacity-75"
+              className="group inline-flex h-10 items-center gap-2 rounded-lg border border-zinc-300/16 px-3 text-sm font-black text-white transition hover:-translate-y-0.5 hover:border-zinc-200/35 hover:bg-zinc-300/14 active:translate-y-0 disabled:cursor-wait disabled:opacity-75"
             >
-              <FiRefreshCw className={`transition-transform duration-500 group-hover:rotate-180 ${loading ? 'animate-spin text-cyan-200' : ''}`} />
+              <FiRefreshCw className={`transition-transform duration-500 group-hover:rotate-180 ${loading ? 'animate-spin text-zinc-200' : ''}`} />
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>
-            <button type="button" onClick={handleLogout} className="inline-flex h-10 items-center gap-2 rounded-lg bg-white px-3 text-sm font-black text-slate-950">
+            <button type="button" onClick={handleLogout} className="inline-flex h-10 items-center gap-2 rounded-lg bg-zinc-200 px-3 text-sm font-black text-zinc-950 transition hover:bg-zinc-300">
               <FiLogOut />
               Logout
             </button>
@@ -234,17 +234,23 @@ function AdminDashboardPage() {
 
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:px-8">
         {status.message && (
-          <div className={`rounded-lg border px-4 py-3 text-sm font-bold ${status.type === 'error' ? 'border-rose-400/30 bg-rose-400/10 text-rose-100' : 'border-emerald-400/30 bg-emerald-400/10 text-emerald-100'}`}>
+          <div className={`rounded-lg border px-4 py-3 text-sm font-bold ${status.type === 'error' ? 'border-zinc-300/20 bg-zinc-300/14 text-zinc-100' : 'border-zinc-300/20 bg-zinc-300/14 text-zinc-100'}`}>
             {status.message}
           </div>
         )}
 
         <section className="grid gap-4 md:grid-cols-5">
-          <Metric icon={FiBarChart2} label="Total sales" value={currency.format(analytics?.totalSales || 0)} />
-          <Metric icon={FiBarChart2} label="Weekly sales" value={currency.format(analytics?.weeklySales || 0)} />
-          <Metric icon={FiBarChart2} label="Monthly sales" value={currency.format(analytics?.monthlySales || 0)} />
-          <Metric icon={FiPackage} label="Orders" value={analytics?.numberOfOrders || paidOrders.length} />
-          <Metric icon={FiBox} label="Revenue" value={currency.format(analytics?.revenue || 0)} />
+          {loading ? (
+            <MetricSkeletons />
+          ) : (
+            <>
+              <Metric icon={FiBarChart2} label="Total sales" value={currency.format(analytics?.totalSales || 0)} />
+              <Metric icon={FiBarChart2} label="Weekly sales" value={currency.format(analytics?.weeklySales || 0)} />
+              <Metric icon={FiBarChart2} label="Monthly sales" value={currency.format(analytics?.monthlySales || 0)} />
+              <Metric icon={FiPackage} label="Orders" value={analytics?.numberOfOrders || paidOrders.length} />
+              <Metric icon={FiBox} label="Revenue" value={currency.format(analytics?.revenue || 0)} />
+            </>
+          )}
         </section>
 
         <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
@@ -275,9 +281,9 @@ function AdminDashboardPage() {
             <form className="grid gap-3" onSubmit={saveProduct}>
               <div className="grid gap-3 sm:grid-cols-2">
                 <PanelInput label="Title" value={productForm.title} onChange={(value) => setProductForm({ ...productForm, title: value })} required />
-                <label className="grid gap-2 text-sm font-bold text-slate-300">
+                <label className="grid gap-2 text-sm font-bold text-zinc-300">
                   Category
-                  <select value={productForm.categoryId} onChange={(event) => setProductForm({ ...productForm, categoryId: event.target.value })} className="h-11 rounded-lg border border-white/10 bg-slate-950/80 px-3 text-sm font-semibold text-white outline-none focus:border-cyan-300">
+                  <select value={productForm.categoryId} onChange={(event) => setProductForm({ ...productForm, categoryId: event.target.value })} className="h-11 rounded-lg border border-zinc-300/16 bg-zinc-800/80 px-3 text-sm font-semibold text-white outline-none focus:border-zinc-200/50">
                     <option value="">Uncategorized</option>
                     {categories.map((category) => <option key={category.categoryId} value={category.categoryId}>{category.title}</option>)}
                   </select>
@@ -319,7 +325,7 @@ function AdminDashboardPage() {
               {visibleOrders.map((order) => (
                 <DataRow key={order.orderId} title={`${currency.format(order.orderAmount)} - ${order.billingName || 'Customer'}`} subtitle={`Order: ${formatOrderStatus(order.orderStatus)} | Payment: ${order.paymentStatus}`}>
                   {(order.orderStatus === 'PAID' || isShippedStatus(order.orderStatus)) && (
-                    <button type="button" onClick={() => moveOrder(order)} className="inline-flex h-9 items-center gap-2 rounded-lg bg-cyan-500 px-3 text-xs font-black text-white">
+                    <button type="button" onClick={() => moveOrder(order)} className="inline-flex h-9 items-center gap-2 rounded-lg bg-zinc-200 px-3 text-xs font-black text-zinc-950 transition hover:bg-zinc-300">
                       <FiCheckCircle />
                       Mark {order.orderStatus === 'PAID' ? 'Shipped' : 'Delivered'}
                     </button>
@@ -358,19 +364,29 @@ function AdminDashboardPage() {
 
 function Metric({ icon: Icon, label, value }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
-      <Icon className="text-xl text-cyan-200" />
-      <p className="mt-3 text-xs font-black uppercase text-slate-500">{label}</p>
+    <div className="rounded-lg border border-zinc-300/16 bg-zinc-700/82 p-4 shadow-xl shadow-black/10">
+      <Icon className="text-xl text-white" />
+      <p className="mt-3 text-xs font-black uppercase text-zinc-500">{label}</p>
       <p className="mt-1 text-xl font-black text-white">{value}</p>
     </div>
   )
 }
 
+function MetricSkeletons() {
+  return Array.from({ length: 5 }).map((_, index) => (
+    <div key={index} className="animate-pulse rounded-lg border border-zinc-300/16 bg-zinc-700/82 p-4 shadow-xl shadow-black/10">
+      <div className="h-5 w-5 rounded bg-zinc-800" />
+      <div className="mt-4 h-3 w-20 rounded bg-zinc-800" />
+      <div className="mt-3 h-6 w-28 rounded bg-zinc-700" />
+    </div>
+  ))
+}
+
 function AdminSection({ title, icon: Icon, children }) {
   return (
-    <section className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
+    <section className="rounded-lg border border-zinc-300/16 bg-zinc-700/76 p-5 shadow-xl shadow-black/10">
       <div className="mb-5 flex items-center gap-2">
-        <Icon className="text-cyan-200" />
+        <Icon className="text-zinc-200" />
         <h2 className="text-lg font-black text-white">{title}</h2>
       </div>
       {children}
@@ -380,27 +396,27 @@ function AdminSection({ title, icon: Icon, children }) {
 
 function PanelInput({ label, value, onChange, type = 'text', required = false }) {
   return (
-    <label className="grid gap-2 text-sm font-bold text-slate-300">
+    <label className="grid gap-2 text-sm font-bold text-zinc-300">
       {label}
-      <input required={required} type={type} value={value} onChange={(event) => onChange(event.target.value)} className="h-11 rounded-lg border border-white/10 bg-slate-950/80 px-3 text-sm font-semibold text-white outline-none focus:border-cyan-300" />
+      <input required={required} type={type} value={value} onChange={(event) => onChange(event.target.value)} className="h-11 rounded-lg border border-zinc-300/16 bg-zinc-800/80 px-3 text-sm font-semibold text-white outline-none focus:border-zinc-200/50" />
     </label>
   )
 }
 
 function PanelTextarea({ label, value, onChange }) {
   return (
-    <label className="grid gap-2 text-sm font-bold text-slate-300">
+    <label className="grid gap-2 text-sm font-bold text-zinc-300">
       {label}
-      <textarea value={value} onChange={(event) => onChange(event.target.value)} className="min-h-24 rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-cyan-300" />
+      <textarea value={value} onChange={(event) => onChange(event.target.value)} className="min-h-24 rounded-lg border border-zinc-300/16 bg-zinc-800/80 px-3 py-2 text-sm font-semibold text-white outline-none focus:border-zinc-200/50" />
     </label>
   )
 }
 
 function Toggle({ checked, label, onChange }) {
   return (
-    <label className="flex h-11 items-center justify-between rounded-lg border border-white/10 bg-slate-950/80 px-3 text-sm font-bold text-slate-200">
+    <label className="flex h-11 items-center justify-between rounded-lg border border-zinc-300/16 bg-zinc-800/80 px-3 text-sm font-bold text-zinc-200">
       {label}
-      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} className="h-4 w-4 accent-cyan-400" />
+      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} className="h-4 w-4 accent-zinc-400" />
     </label>
   )
 }
@@ -408,12 +424,12 @@ function Toggle({ checked, label, onChange }) {
 function FormActions({ editing, onCancel }) {
   return (
     <div className="flex gap-2">
-      <button type="submit" className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-400 text-sm font-black text-white">
+      <button type="submit" className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-zinc-200 text-sm font-black text-zinc-950 transition hover:bg-zinc-300">
         {editing ? <FiSave /> : <FiPlus />}
         {editing ? 'Update' : 'Create'}
       </button>
       {editing && (
-        <button type="button" onClick={onCancel} className="h-11 rounded-lg border border-white/10 px-4 text-sm font-black text-white">
+        <button type="button" onClick={onCancel} className="h-11 rounded-lg border border-zinc-300/16 px-4 text-sm font-black text-white">
           Cancel
         </button>
       )}
@@ -423,10 +439,10 @@ function FormActions({ editing, onCancel }) {
 
 function DataRow({ title, subtitle, children }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-slate-950/45 p-3">
+    <div className="flex items-center justify-between gap-3 rounded-lg border border-zinc-300/16 bg-zinc-800/70 p-3">
       <div className="min-w-0">
         <p className="truncate text-sm font-black text-white">{title}</p>
-        <p className="mt-1 line-clamp-2 text-xs font-semibold text-slate-400">{subtitle}</p>
+        <p className="mt-1 line-clamp-2 text-xs font-semibold text-zinc-400">{subtitle}</p>
       </div>
       {children && <div className="flex shrink-0 gap-2">{children}</div>}
     </div>
@@ -437,7 +453,7 @@ function ShowMoreButton({ total, visible, expanded, onClick }) {
   if (total <= 5) return null
 
   return (
-    <button type="button" onClick={onClick} className="h-10 rounded-lg border border-cyan-300/20 bg-cyan-400/10 text-sm font-black text-cyan-100">
+    <button type="button" onClick={onClick} className="h-10 rounded-lg border border-zinc-300/20 bg-zinc-300/14 text-sm font-black text-zinc-100 transition hover:border-zinc-200/35">
       {expanded ? 'Show less' : `Show more (${total - visible})`}
     </button>
   )
@@ -445,7 +461,7 @@ function ShowMoreButton({ total, visible, expanded, onClick }) {
 
 function IconAction({ icon: Icon, label, onClick, danger = false }) {
   return (
-    <button type="button" onClick={onClick} className={`grid h-9 w-9 place-items-center rounded-lg border ${danger ? 'border-rose-400/30 text-rose-200' : 'border-cyan-300/25 text-cyan-100'}`} title={label} aria-label={label}>
+    <button type="button" onClick={onClick} className={`grid h-9 w-9 place-items-center rounded-lg border transition hover:bg-zinc-300/14 ${danger ? 'border-zinc-300/20 text-zinc-200' : 'border-zinc-300/20 text-zinc-100'}`} title={label} aria-label={label}>
       <Icon />
     </button>
   )
@@ -461,8 +477,11 @@ function formatOrderStatus(status) {
 
 function EmptyState({ text }) {
   return (
-    <div className="rounded-lg border border-dashed border-white/15 px-4 py-6 text-center text-sm font-bold text-slate-400">
-      {text}
+    <div className="grid place-items-center rounded-lg border border-dashed border-zinc-300/20 px-4 py-6 text-center">
+      <span className="mb-3 grid h-10 w-10 place-items-center rounded-lg border border-zinc-300/16 bg-zinc-800/70 text-white">
+        <FiPackage />
+      </span>
+      <p className="max-w-sm text-sm font-bold leading-6 text-zinc-400">{text}</p>
     </div>
   )
 }

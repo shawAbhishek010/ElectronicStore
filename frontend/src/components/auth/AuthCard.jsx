@@ -21,25 +21,25 @@ function AuthCard({ initialMode = 'login' }) {
   }, [initialMode])
 
   return (
-    <div className="grid min-h-[690px] overflow-hidden rounded-[28px] border border-white/25 bg-white/14 shadow-2xl shadow-blue-950/40 backdrop-blur-2xl lg:grid-cols-[1fr_460px]">
-      <aside className="relative hidden min-h-[690px] overflow-hidden bg-slate-950 text-white lg:block">
+    <div className="grid min-h-[690px] overflow-hidden rounded-lg border border-zinc-300/20 bg-white/10 shadow-2xl shadow-zinc-900/45 backdrop-blur-xl lg:grid-cols-[1fr_460px]">
+      <aside className="relative hidden min-h-[690px] overflow-hidden bg-zinc-800 text-white lg:block">
         <img
           className="absolute inset-0 h-full w-full object-cover object-center"
           src="/images/electronics-auth-showroom.png"
           alt="Premium electronics displayed in a modern showroom"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.08)_20%,rgba(2,6,23,0.35)_55%,rgba(2,6,23,0.96)_100%)]" />
-        <div className="absolute inset-x-0 bottom-0 h-64 bg-[linear-gradient(180deg,transparent,rgba(8,47,73,0.22))]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,9,11,0.1)_18%,rgba(9,9,11,0.42)_58%,rgba(9,9,11,0.96)_100%)]" />
+        <div className="absolute inset-x-0 bottom-0 h-64 bg-[linear-gradient(180deg,transparent,rgba(24,24,27,0.52))]" />
 
         <div className="relative flex min-h-[690px] flex-col justify-start p-10 xl:p-12">
           <h1 className="max-w-md text-5xl font-black leading-tight text-white">
             SparkGadget
           </h1>
-          <p className="mt-4 max-w-lg text-lg leading-7 text-slate-200">
+          <p className="mt-4 max-w-lg text-lg leading-7 text-zinc-200">
             Premium electronics with a secure, reliable shopping experience.
           </p>
 
-          <div className="mt-6 flex flex-wrap gap-x-6 gap-y-3 text-sm font-bold text-cyan-100">
+          <div className="mt-6 flex flex-wrap gap-x-6 gap-y-3 text-sm font-bold text-zinc-100">
             <HeroDetail icon={FiLock} label="Secure session" />
             <HeroDetail icon={FiZap} label="Fast checkout" />
             <HeroDetail icon={FiTruck} label="Tracked delivery" />
@@ -47,19 +47,19 @@ function AuthCard({ initialMode = 'login' }) {
         </div>
       </aside>
 
-      <section className="relative flex bg-white/82 p-5 backdrop-blur-xl sm:p-8">
-        <div className="w-full rounded-[24px] border border-white bg-white/90 p-6 shadow-xl shadow-slate-900/10 sm:p-8">
+      <section className="relative flex bg-zinc-200/95 p-4 backdrop-blur-xl sm:p-6">
+        <div className="w-full rounded-lg border border-zinc-300 bg-zinc-100 p-6 shadow-xl shadow-zinc-900/10 sm:p-8">
           <div className="mb-7 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-blue-600 to-sky-400 text-white shadow-lg shadow-blue-600/30">
+              <div className="grid h-12 w-12 place-items-center rounded-lg bg-zinc-800 text-white shadow-lg shadow-zinc-900/20">
                 <FiShoppingBag className="text-2xl" />
               </div>
               <div>
-                <p className="text-sm font-bold uppercase tracking-[0.18em] text-blue-600">Welcome</p>
-                <h2 className="text-2xl font-black text-slate-950">SparkGadget</h2>
+                <p className="text-sm font-bold uppercase text-zinc-950">Welcome</p>
+                <h2 className="text-2xl font-black text-zinc-950">SparkGadget</h2>
               </div>
             </div>
-            <span className="hidden rounded-2xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-black uppercase text-blue-700 sm:inline-flex">
+            <span className="hidden rounded-lg border border-zinc-200 bg-zinc-200 px-3 py-2 text-xs font-black uppercase text-zinc-700 sm:inline-flex">
               Pro Suite
             </span>
           </div>
@@ -70,18 +70,18 @@ function AuthCard({ initialMode = 'login' }) {
             <MiniTrust icon={FiTruck} label="Tracked" />
           </div>
 
-          <div className="mb-7 grid grid-cols-2 rounded-2xl bg-slate-100 p-1">
+          <div className="mb-7 grid grid-cols-2 rounded-lg bg-zinc-100 p-1">
             <button
               type="button"
               onClick={() => setMode('login')}
-              className={`rounded-xl px-4 py-3 text-sm font-bold transition ${isLogin ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+              className={`rounded-lg px-4 py-3 text-sm font-bold transition ${isLogin ? 'bg-zinc-200 text-zinc-950 shadow-sm' : 'text-zinc-500 hover:text-zinc-900'}`}
             >
               Login
             </button>
             <button
               type="button"
               onClick={() => setMode('register')}
-              className={`rounded-xl px-4 py-3 text-sm font-bold transition ${!isLogin ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+              className={`rounded-lg px-4 py-3 text-sm font-bold transition ${!isLogin ? 'bg-zinc-200 text-zinc-950 shadow-sm' : 'text-zinc-500 hover:text-zinc-900'}`}
             >
               Register
             </button>
@@ -119,7 +119,7 @@ function AuthCard({ initialMode = 'login' }) {
 function HeroDetail({ icon: Icon, label }) {
   return (
     <span className="inline-flex items-center gap-2">
-      <Icon className="text-lg text-cyan-300" />
+      <Icon className="text-lg text-white" />
       {label}
     </span>
   )
@@ -127,8 +127,8 @@ function HeroDetail({ icon: Icon, label }) {
 
 function MiniTrust({ icon: Icon, label }) {
   return (
-    <div className="grid place-items-center rounded-2xl border border-slate-200 bg-slate-50 px-2 py-3 text-center text-xs font-black text-slate-600">
-      <Icon className="mb-1 text-lg text-blue-600" />
+    <div className="grid place-items-center rounded-lg border border-zinc-200 bg-zinc-200 px-2 py-3 text-center text-xs font-black text-zinc-600">
+      <Icon className="mb-1 text-lg text-zinc-950" />
       {label}
     </div>
   )
