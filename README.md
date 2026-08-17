@@ -135,10 +135,10 @@ The application has local defaults, but real credentials should be set through e
 | Variable | Required | Purpose | Default |
 | --- | --- | --- | --- |
 | `MYSQL_USER` | No | MySQL username | `root` |
-| `MYSQL_PASSWORD` | No | MySQL password | `Abhishek1234` |
+| `MYSQL_PASSWORD` | Local only | MySQL password | Empty |
 | `JWT_SECRET` | Recommended | Secret used to sign JWT tokens | Local development secret |
-| `ADMIN_PORTAL_PASSWORD` | Recommended | Password required for admin portal access | `Admin@123` |
-| `RAZORPAY_KEY_ID` | No | Razorpay public key id | Test key from properties |
+| `ADMIN_PORTAL_PASSWORD` | Required for admins | Password required for admin portal access | Empty |
+| `RAZORPAY_KEY_ID` | For payments | Razorpay public key id | Empty |
 | `RAZORPAY_KEY_SECRET` | For payments | Razorpay secret key | Empty |
 | `GROQ_API_KEY` | For assistant | Groq API key | Empty |
 | `GROQ_MODEL` | No | Groq model name | `openai/gpt-oss-20b` |
@@ -239,16 +239,10 @@ Supported roles:
 For admin registration or login, the selected admin portal password must match:
 
 ```properties
-admin.portal.password=${ADMIN_PORTAL_PASSWORD:Admin@123}
+admin.portal.password=${ADMIN_PORTAL_PASSWORD:}
 ```
 
-For local development, the default admin portal password is:
-
-```text
-Admin@123
-```
-
-Change it before using the project outside local development.
+Set `ADMIN_PORTAL_PASSWORD` in your local shell or hosting provider before creating or logging in as an admin.
 
 ## API Overview
 

@@ -1,4 +1,5 @@
 import { getDiscountPercent, getProductPrice } from './productPricing.js'
+import { getProductQuantity, isProductAvailable } from './productAvailability.js'
 
 const categoryKeywords = {
   audio: ['audio', 'speaker', 'headphone', 'earphone', 'earbuds', 'sound', 'music', 'bass'],
@@ -44,7 +45,7 @@ const scoreProduct = ({ product, question, budget, signals }) => {
   const productText = getProductText(product)
   const terms = normalize(question).split(' ').filter((term) => term.length > 2)
   const categoryTitle = normalize(product.category?.title)
-  let score = product.stock ? 3 : -4
+  let score = isProductAvailable(product) ? 3 : -4
 
   terms.forEach((term) => {
     if (productText.includes(term)) score += 2
@@ -103,8 +104,8 @@ export const buildAssistantProductContext = ({
       price: getProductPrice(product),
       originalPrice: product.price || getProductPrice(product),
       discountPercent: getDiscountPercent(product),
-      stock: Boolean(product.stock),
-      quantity: product.quantity || 0,
+      stock: isProductAvailable(product),
+      quantity: getProductQuantity(product),
       signals,
     }))
 }

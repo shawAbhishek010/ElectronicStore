@@ -6,6 +6,7 @@ import com.lcwd.electronicStore.ElectronicStore.entities.User;
 import com.lcwd.electronicStore.ElectronicStore.exceptions.ResourceNotFoundException;
 import com.lcwd.electronicStore.ElectronicStore.helper.PageableHelper;
 import com.lcwd.electronicStore.ElectronicStore.repositories.UserRepository;
+import com.lcwd.electronicStore.ElectronicStore.services.AdminAccountSyncService;
 import com.lcwd.electronicStore.ElectronicStore.services.UserService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,8 @@ public class UserServicesImpl implements UserService {
     private PageableHelper pageableHelper;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private AdminAccountSyncService adminAccountSyncService;
 
     @Override
     public UserDto createUser(UserDto userDto) {
@@ -53,6 +56,7 @@ public class UserServicesImpl implements UserService {
         // Step 3: Convert dto->entity, save user, then convert entity->dto for API response.
         User user = dtoToEntity(userDto);
         User save = userRepository.save(user);
+        adminAccountSyncService.syncUser(save);
         UserDto newDto = entityToDto(save);
         return newDto;
     }
@@ -73,6 +77,7 @@ public class UserServicesImpl implements UserService {
 
         // Step 3: Save updated user and return dto.
         User save = userRepository.save(user);
+        adminAccountSyncService.syncUser(save);
         UserDto userDto1 = entityToDto(save);
         return userDto1;
     }
@@ -81,6 +86,7 @@ public class UserServicesImpl implements UserService {
     public void DeleteUser(String userid) {
         User user = userRepository.findById(userid)
                 .orElseThrow(() -> new ResourceNotFoundException("userId is not valid here"));
+        adminAccountSyncService.removeUser(userid);
         userRepository.delete(user);
     }
 

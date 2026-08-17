@@ -3,6 +3,7 @@ Purpose:
 Builds personalized recommended products from cart, wishlist, recent views, and catalog data.
 */
 import { getDiscountPercent, getProductPrice } from './productPricing.js'
+import { getProductQuantity, isProductAvailable } from './productAvailability.js'
 
 const getProductId = (product) => product?.productId
 const getCategoryId = (product) => product?.category?.categoryId || product?.categoryId
@@ -22,7 +23,7 @@ const scoreProduct = (product, signals) => {
   const productPrice = getProductPrice(product)
   const productCategoryId = getCategoryId(product)
   let score = Math.min(getDiscountPercent(product), 40) / 20
-  score += Math.min(product.quantity || 0, 30) / 30
+  score += Math.min(getProductQuantity(product), 30) / 30
 
   signals.forEach((signal, index) => {
     const recencyWeight = Math.max(1, 4 - index * 0.3)
@@ -77,9 +78,7 @@ export const getRecommendedProducts = ({
   const excludedIds = new Set(uniqueProducts(cartProducts).map(getProductId))
   const candidates = products.filter(
     (product) =>
-      product?.live !== false &&
-      product?.stock &&
-      product?.quantity > 0 &&
+      isProductAvailable(product) &&
       !excludedIds.has(getProductId(product)),
   )
 

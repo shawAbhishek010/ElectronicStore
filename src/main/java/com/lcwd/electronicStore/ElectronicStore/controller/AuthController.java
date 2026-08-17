@@ -38,7 +38,7 @@ public class AuthController {
     private final JwtHelper jwtHelper;
     private final UserService userService;
 
-    @Value("${admin.portal.password:Admin@123}")
+    @Value("${admin.portal.password:}")
     private String adminPortalPassword;
 
     public AuthController(AuthenticationManager authenticationManager, JwtHelper jwtHelper, UserService userService) {

@@ -3,10 +3,11 @@ Purpose:
 Selects products with active discounts for deal sections.
 */
 import { getDiscountAmount, getDiscountPercent } from './productPricing.js'
+import { isProductAvailable } from './productAvailability.js'
 
 export const getDiscountedProducts = (products, limit = 12) => {
   return products
-    .filter((product) => product?.live !== false && product?.stock && getDiscountPercent(product) > 0)
+    .filter((product) => isProductAvailable(product) && getDiscountPercent(product) > 0)
     .sort((first, second) => {
       const discountDifference = getDiscountPercent(second) - getDiscountPercent(first)
       if (discountDifference !== 0) return discountDifference

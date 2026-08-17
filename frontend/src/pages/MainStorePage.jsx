@@ -46,6 +46,7 @@ import { addWishlistProduct, getWishlist, removeWishlistProduct } from '../servi
 import { askAssistant } from '../services/assistantService.js'
 import { buildAssistantFallbackAnswer, buildAssistantProductContext } from '../utils/assistantRecommendations.js'
 import { getDiscountedProducts } from '../utils/discountedProducts.js'
+import { getProductQuantity, isProductAvailable } from '../utils/productAvailability.js'
 import { getDiscountPercent, getProductPrice } from '../utils/productPricing.js'
 import { getRecommendedProducts } from '../utils/recommendedProducts.js'
 
@@ -296,31 +297,42 @@ function MainStorePage() {
   const [assistantMessages, setAssistantMessages] = useState([assistantIntroMessage])
 
   const refreshStore = useCallback(async () => {
-    if (!user?.userId) return
+    if (!user?.userId) {
+      setPageStatus({ loading: false, error: 'Please sign in again to load your store.' })
+      return
+    }
 
     setPageStatus({ loading: true, error: '' })
     try {
-      const [categoryData, productData, cartData, wishlistData, viewedData, orderData] = await Promise.all([
+      const [categoryData, productData] = await Promise.all([
         getCategories(),
         getProducts(),
-        getCart(user.userId),
-        getWishlist(user.userId),
-        getRecentlyViewed(user.userId),
-        getUserOrders(user.userId),
       ])
 
       setCategories(categoryData)
       setProducts(productData)
-      setCart(cartData)
-      setWishlist(wishlistData)
-      setRecentlyViewed(viewedData)
-      setOrders(orderData)
     } catch (error) {
       setPageStatus({ loading: false, error: error.message })
       return
     }
 
-    setPageStatus({ loading: false, error: '' })
+    const [cartResult, wishlistResult, viewedResult, orderResult] = await Promise.allSettled([
+      getCart(user.userId),
+      getWishlist(user.userId),
+      getRecentlyViewed(user.userId),
+      getUserOrders(user.userId),
+    ])
+
+    if (cartResult.status === 'fulfilled') setCart(cartResult.value)
+    if (wishlistResult.status === 'fulfilled') setWishlist(wishlistResult.value)
+    if (viewedResult.status === 'fulfilled') setRecentlyViewed(viewedResult.value)
+    if (orderResult.status === 'fulfilled') setOrders(orderResult.value)
+
+    const accountError = [cartResult, wishlistResult, viewedResult, orderResult].find((result) => result.status === 'rejected')
+    setPageStatus({
+      loading: false,
+      error: accountError ? `Catalog loaded, but some account data could not be loaded: ${accountError.reason?.message || 'Please try again.'}` : '',
+    })
   }, [user?.userId])
 
   useEffect(() => {
@@ -417,7 +429,8 @@ function MainStorePage() {
         selectedCategory === 'all' ||
         product.category?.categoryId === selectedCategory ||
         normalizeCategoryTitle(product.category?.title) === selectedCategoryKey
-      const matchesStock = stockFilter === 'all' || (stockFilter === 'available' ? product.stock : !product.stock)
+      const isAvailable = isProductAvailable(product)
+      const matchesStock = stockFilter === 'all' || (stockFilter === 'available' ? isAvailable : !isAvailable)
       const matchesPrice =
         priceRange === 'all' ||
         (priceRange === 'budget' && price < 10000) ||
@@ -442,7 +455,7 @@ function MainStorePage() {
     const sortedProducts = [...visibleProducts].sort((a, b) => {
       if (sortBy === 'price-low') return getProductPrice(a) - getProductPrice(b)
       if (sortBy === 'price-high') return getProductPrice(b) - getProductPrice(a)
-      if (sortBy === 'stock') return b.quantity - a.quantity
+      if (sortBy === 'stock') return getProductQuantity(b) - getProductQuantity(a)
       return new Date(b.addedDate || 0) - new Date(a.addedDate || 0)
     })
 
@@ -1494,6 +1507,8 @@ function ProductCard({ product, isLiked, onAddToCart, onToggleWishlist, onView }
   const discount = getDiscountPercent(product)
   const imageUrl = getProductImage(product)
   const fallbackImage = getProductFallbackImage(product)
+  const quantity = getProductQuantity(product)
+  const isAvailable = isProductAvailable(product)
   const [cartPulse, setCartPulse] = useState(false)
   const [wishPulse, setWishPulse] = useState(false)
 
@@ -1560,11 +1575,11 @@ function ProductCard({ product, isLiked, onAddToCart, onToggleWishlist, onView }
       <div className="p-4">
         <div className="flex items-center justify-between gap-3">
           <span className="rounded-lg bg-zinc-800/80 px-2.5 py-1 text-xs font-black text-zinc-200">{product.category?.title || 'Uncategorized'}</span>
-          <span className={`rounded-lg px-2.5 py-1 text-xs font-black ${product.stock ? 'bg-zinc-300/14 text-zinc-100' : 'bg-zinc-300/14 text-zinc-200'}`}>{product.stock ? 'In stock' : 'Out'}</span>
+          <span className={`rounded-lg px-2.5 py-1 text-xs font-black ${isAvailable ? 'bg-zinc-300/14 text-zinc-100' : 'bg-zinc-300/14 text-zinc-200'}`}>{isAvailable ? 'In stock' : 'Out'}</span>
         </div>
         <h3 className="mt-3 line-clamp-2 min-h-12 text-lg font-black leading-6 text-white">{product.title}</h3>
         <p className="mt-2 line-clamp-2 min-h-10 text-sm leading-5 text-zinc-400">{product.description}</p>
-        <p className="mt-2 text-xs font-semibold text-zinc-500">{product.quantity} units ready</p>
+        <p className="mt-2 text-xs font-semibold text-zinc-500">{quantity} units ready</p>
         <div className="mt-4 flex items-end justify-between gap-3">
           <div>
             <p className="text-xl font-black text-white">{currency.format(getProductPrice(product))}</p>
@@ -1575,7 +1590,7 @@ function ProductCard({ product, isLiked, onAddToCart, onToggleWishlist, onView }
             whileTap={{ scale: 0.9 }}
             animate={cartPulse ? { y: [0, -4, 0], scale: [1, 1.05, 1] } : { y: 0, scale: 1 }}
             onClick={handleAddToCart}
-            disabled={!product.stock || product.quantity <= 0}
+            disabled={!isAvailable}
             className="inline-flex h-10 items-center gap-2 rounded-lg bg-zinc-200 px-3 text-sm font-black text-zinc-950 shadow-lg shadow-black/15 transition hover:bg-zinc-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <FiShoppingCart />
