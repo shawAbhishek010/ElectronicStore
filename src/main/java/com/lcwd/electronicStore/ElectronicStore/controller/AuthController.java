@@ -119,8 +119,29 @@ public class AuthController {
             return;
         }
 
-        if (providedPassword == null || providedPassword.isBlank() || !providedPassword.equals(adminPortalPassword)) {
+        String expectedPassword = cleanConfiguredSecret(adminPortalPassword);
+        String actualPassword = cleanConfiguredSecret(providedPassword);
+        if (expectedPassword.isBlank()) {
+            throw new BadApiRequestException("Admin portal password is not configured.");
+        }
+
+        if (actualPassword.isBlank() || !actualPassword.equals(expectedPassword)) {
             throw new BadApiRequestException("Invalid admin portal password.");
         }
+    }
+
+    private String cleanConfiguredSecret(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        String cleanedValue = value.trim();
+        if (cleanedValue.length() >= 2
+                && ((cleanedValue.startsWith("\"") && cleanedValue.endsWith("\""))
+                || (cleanedValue.startsWith("'") && cleanedValue.endsWith("'")))) {
+            return cleanedValue.substring(1, cleanedValue.length() - 1).trim();
+        }
+
+        return cleanedValue;
     }
 }
