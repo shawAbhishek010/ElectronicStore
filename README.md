@@ -16,7 +16,7 @@ The project supports two portals:
 - Spring Web
 - Spring Data JPA
 - Spring Security
-- JWT using `jjwt`
+- JWT 
 - MySQL
 - Maven
 - ModelMapper
