@@ -126,7 +126,9 @@ public class SecurityConfig {
                 "http://localhost:5173",
                 "http://127.0.0.1:5173",
                 "http://localhost:5174",
-                "http://127.0.0.1:5174"
+                "http://127.0.0.1:5174",
+                "https://electronic-store-cl97e5421-shawabhishek010s-projects.vercel.app",
+                "https://electronic-store-sooty.vercel.app"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
